@@ -13,8 +13,10 @@
     "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {
+    "@daveyplate/better-auth-ui": "^2.1.2",
     "@neondatabase/serverless": "^1.0.1",
     "@radix-ui/react-slot": "^1.2.3",
+    "better-auth": "^1.3.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.1",
@@ -24,6 +26,7 @@
     "next-themes": "^0.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
