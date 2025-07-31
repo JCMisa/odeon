@@ -8,6 +8,76 @@
       "when": 1753945854749,
       "tag": "0000_wooden_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1753952628302,
+      "tag": "0001_wild_kang",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753952931827,
+      "tag": "0002_smooth_typhoid_mary",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1753953107173,
+      "tag": "0003_big_randall_flagg",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1753953224421,
+      "tag": "0004_peaceful_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1753953343856,
+      "tag": "0005_neat_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753953726510,
+      "tag": "0006_redundant_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1753954050489,
+      "tag": "0007_heavy_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1753954716513,
+      "tag": "0008_cute_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1753955164308,
+      "tag": "0009_curved_harpoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1753955297356,
+      "tag": "0010_spooky_madame_masque",
+      "breakpoints": true
     }
   ]
 }
