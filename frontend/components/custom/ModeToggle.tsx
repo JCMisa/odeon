@@ -23,7 +23,7 @@ export default function ModeToggle({ className = "" }: { className?: string }) {
         type="button"
         aria-label="Toggle theme"
         onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative w-[50px] h-[50px] flex items-center justify-center p-1 rounded-full bg-light-200 dark:bg-dark-200 duration-300 border-none outline-none hover:scale-105 transition-transform xl:hidden ${className}`}
+        className={`relative w-[50px] h-[50px] flex items-center justify-center p-1 rounded-full bg-neutral-200 dark:bg-neutral-800 duration-300 border-none outline-none hover:scale-105 transition-transform xl:hidden ${className}`}
       >
         {isDark ? (
           <MoonIcon className="size-4 text-white" />
@@ -37,13 +37,13 @@ export default function ModeToggle({ className = "" }: { className?: string }) {
         type="button"
         aria-label="Toggle theme"
         onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative w-[90px] h-[50px] items-center p-1 rounded-full bg-light-200 dark:bg-dark-200 duration-300 border-none outline-none hover:scale-105 transition-transform hidden xl:flex ${className}`}
+        className={`relative w-[90px] h-[50px] items-center p-1 rounded-full bg-neutral-200 dark:bg-neutral-800 duration-300 border-none outline-none hover:scale-105 transition-transform hidden xl:flex ${className}`}
       >
         {/* Thumb with icon */}
         <span
-          className={`absolute top-1 left-1 w-[40px] h-[40px] rounded-full bg-bg-dark-100/80 shadow transition-transform duration-300 flex items-center justify-center z-10`}
+          className={`absolute top-1 left-1 w-[40px] h-[40px] rounded-full bg-neutral-100/80 dark:bg-neutral-900/80 shadow transition-transform duration-300 flex items-center justify-center z-10`}
           style={{
-            transform: isDark ? "translateX(0)" : "translateX(32px)",
+            transform: isDark ? "translateX(4px)" : "translateX(36px)",
           }}
         >
           {isDark ? (

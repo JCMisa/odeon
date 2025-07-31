@@ -396,17 +396,10 @@ def main():
         full_described_song="My emotion is sad. My girlfriend and i broke up because she is always farting in every occation. I need a music that is sad, emotional, a chinese man vocal."
     )
     
-    # wk-NcsCq4eFVBqOzfG3SrRiJG
-    # ws-L7KzytyTtsDI4tpVlYCimN
-    
-    headers = {
-        "Modal-Key": "wk-NcsCq4eFVBqOzfG3SrRiJG",
-        "Modal-Secret": "ws-L7KzytyTtsDI4tpVlYCimN"
-    }
     
     payload = request_data.model_dump() # model.dump() means fetch all properties (full_described_song, etc.)
 
-    response = requests.post(endpoint_url, json=payload, headers=headers) # Send an HTTP POST request to our cloud endpoint.
+    response = requests.post(endpoint_url, json=payload) # Send an HTTP POST request to our cloud endpoint.
     response.raise_for_status() # Check if the request was successful; raise error if not.
     result = GenerateMusicResponseS3(**response.json()) # Parse the JSON response into our Pydantic model.
     
