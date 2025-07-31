@@ -1,0 +1,39 @@
+> login to aws root account
+
+> click on s3
+
+> create an s3, provide name
+
+> search and click IAM
+
+> create new user
+
+> give the name for the user, and add policy (get, put, delete, etc.)
+
+> click Add ARNs to specify whic user is this bucket allowed
+
+> open new aws tab and go to s3, click the s3 bucket project
+
+> go to properties, and copy the arn only the bucket name
+
+> go back to create polict tab where Specify ARN modal is and paste it there
+
+> select any for the object, then next
+
+> create policy name
+
+> then create the policy
+
+> go back to create user IAM tab and refresh to see the new policy
+
+> search for the policy, next, and create the user 
+
+> create a credential for that user, select create access key
+
+> select other > Next > type the description tag value > Create access key
+
+> copy the access key and secret access key
+
+> put them in modal dashboard together with the region and the bucket name
+
+> go to vscode > open terminal > pip install boto3 (used to interact with aws)
