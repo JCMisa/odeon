@@ -14,8 +14,9 @@ import {
 
 export const songStatus = pgEnum("songStatus", [
   "queued",
+  "processed",
   "processing",
-  "completed",
+  "no credits",
   "failed",
 ]);
 

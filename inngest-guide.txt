@@ -1,0 +1,1 @@
+run (.\inngest dev) in terminal since inngest.exe is inside the frontend folder

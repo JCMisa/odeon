@@ -264,7 +264,7 @@ class MusicGenServer:
         thumbnail_prompt = f"{prompt}, album cover art" # create the prompt
         
         # image_pipi is instance of stabilityai/sdxl-turbo (our text to image generator model)
-        image = self.image_pipe(prompt=thumbnail_prompt, num_inference_step=2, guidance_scale=0.0).images[0]
+        image = self.image_pipe(prompt=thumbnail_prompt, num_inference_steps=2, guidance_scale=0.0).images[0]
         
         # ? IMAGE GENERATED
         
@@ -285,7 +285,7 @@ class MusicGenServer:
         
         # ? CREATE CATEGORIES BASED ON SONG DESCRIPTION PROVIDED
         
-        # * CATEGORY GENERATION -> hip-hop, rap, etc.
+        # * CATEGORY GENERATION -> [hip-hop, rap, etc.]
         description_for_categorization: str
         categories = self.generate_categories(description=description_for_categorization)
         
@@ -397,7 +397,7 @@ def main():
     )
     
     
-    payload = request_data.model_dump() # model.dump() means fetch all properties (full_described_song, etc.)
+    payload = request_data.model_dump() # model.dump() means fetch all properties (full_described_song, infer_step, instrumental, etc.)
 
     response = requests.post(endpoint_url, json=payload) # Send an HTTP POST request to our cloud endpoint.
     response.raise_for_status() # Check if the request was successful; raise error if not.
