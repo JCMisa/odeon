@@ -23,50 +23,13 @@ export default function ModeToggle({ className = "" }: { className?: string }) {
         type="button"
         aria-label="Toggle theme"
         onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative w-[50px] h-[50px] flex items-center justify-center p-1 rounded-full bg-neutral-200 dark:bg-neutral-800 duration-300 border-none outline-none hover:scale-105 transition-transform xl:hidden ${className}`}
+        className={`relative w-6 h-6 flex items-center justify-center p-1 rounded-full bg-neutral-200 dark:bg-neutral-800  border-none outline-none  ${className}`}
       >
         {isDark ? (
-          <MoonIcon className="size-4 text-white" />
+          <MoonIcon className="size-3 text-white" />
         ) : (
-          <SunIcon className="size-4 text-yellow-400" />
+          <SunIcon className="size-3 text-yellow-500" />
         )}
-      </button>
-
-      {/* Full version for larger screens */}
-      <button
-        type="button"
-        aria-label="Toggle theme"
-        onClick={() => setTheme(isDark ? "light" : "dark")}
-        className={`relative w-[90px] h-[50px] items-center p-1 rounded-full bg-neutral-200 dark:bg-neutral-800 duration-300 border-none outline-none hover:scale-105 transition-transform hidden xl:flex ${className}`}
-      >
-        {/* Thumb with icon */}
-        <span
-          className={`absolute top-1 left-1 w-[40px] h-[40px] rounded-full bg-neutral-100/80 dark:bg-neutral-900/80 shadow transition-transform duration-300 flex items-center justify-center z-10`}
-          style={{
-            transform: isDark ? "translateX(4px)" : "translateX(36px)",
-          }}
-        >
-          {isDark ? (
-            <MoonIcon className="size-4 text-white transition-colors duration-300" />
-          ) : (
-            <SunIcon className="size-4 text-yellow-400 transition-colors duration-300" />
-          )}
-        </span>
-        {/* Centered icons outside the thumb */}
-        <div className="relative w-full h-full flex items-center justify-between z-0 pointer-events-none select-none">
-          {/* Left icon (Moon) */}
-          <div className="flex-1 flex items-center justify-center">
-            {!isDark && (
-              <MoonIcon className="size-4 text-gray-400 opacity-100 transition-colors duration-300" />
-            )}
-          </div>
-          {/* Right icon (Sun) */}
-          <div className="flex-1 flex items-center justify-center">
-            {isDark && (
-              <SunIcon className="size-4 text-gray-400 opacity-100 transition-colors duration-300" />
-            )}
-          </div>
-        </div>
       </button>
     </>
   );

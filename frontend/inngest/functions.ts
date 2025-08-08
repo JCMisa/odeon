@@ -32,6 +32,7 @@ export const generateSong = inngest.createFunction(
     // a step to get the song from database and call fastapi endpoint based on available data provided by user
     const { userId, credits, endpoint, body } = await step.run(
       "check-credits",
+      // get the song and the owner of the song based on songId
       async () => {
         const songData = await db
           .select({
@@ -76,9 +77,9 @@ export const generateSong = inngest.createFunction(
           instrumental: songData[0].instrumental ?? undefined,
         };
 
-        // ? 4 common cases:
+        // ? 3 common cases:
 
-        // 1. user provides a song description and ai generate comma separated prompts and lyrics based on that song description
+        // 1. user provides a song description and ai generates a comma separated prompts and lyrics based on that song description
         if (songData[0].fullDescribedSong) {
           endpoint = process.env.GENERATE_FROM_DESCRIPTION!;
           body = {
@@ -110,7 +111,7 @@ export const generateSong = inngest.createFunction(
         return {
           userId: songData[0].userId,
           credits: songData[0].userCredits,
-          endpoint: endpoint,
+          endpoint: endpoint, // anong endpoint ang gagamitin base sa mga input ni user
           body: body,
         };
       }
