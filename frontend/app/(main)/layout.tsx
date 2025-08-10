@@ -20,6 +20,7 @@ import {
 import BreadCrumbPageClient from "@/components/custom/BreadCrumbPageClient";
 import ModeToggle from "@/components/custom/ModeToggle";
 import LogoutButton from "./_components/LogoutButton";
+import Credits from "./_components/Credits";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,7 +81,12 @@ export default async function RootLayout({
                     <LogoutButton />
                   </div>
                 </header>
-                <main>{children}</main>
+                <main className="relative">
+                  {children}
+                  <div className="absolute top-3 right-3 z-10">
+                    <Credits />
+                  </div>
+                </main>
               </SidebarInset>
             </SidebarProvider>{" "}
             <Toaster />
