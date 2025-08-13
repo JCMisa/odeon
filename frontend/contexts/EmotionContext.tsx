@@ -19,6 +19,7 @@ export interface SongCreationData {
   emotion: string;
   creationMethod: CreationMethod;
   songDescription?: string;
+  isInstrumental?: boolean;
   lyrics?: string;
   settings: SongSettings;
 }
@@ -58,6 +59,10 @@ interface SongCreationContextType {
   songDescription: string;
   setSongDescription: (description: string) => void;
 
+  // Is Interumental
+  isInstrumental: boolean;
+  setIsInstrumental: (instrumental: boolean) => void;
+
   // Lyrics
   lyrics: string;
   setLyrics: (lyrics: string) => void;
@@ -71,6 +76,7 @@ interface SongCreationContextType {
   saveEmotion: () => void;
   saveCreationMethod: () => void;
   saveSongDescription: () => void;
+  saveIsInstrumental: () => void;
   saveLyrics: () => void;
   saveSettings: () => void;
 
@@ -117,6 +123,11 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
   const [songDescription, setSongDescription] = useState<string>("");
   const [savedSongDescription, setSavedSongDescription] = useState<string>("");
 
+  // Is Instrumental
+  const [isInstrumental, setIsInstrumental] = useState<boolean>(false);
+  const [savedIsInstrumental, setSavedIsInstrumental] =
+    useState<boolean>(false);
+
   // Lyrics
   const [lyrics, setLyrics] = useState<string>("");
   const [savedLyrics, setSavedLyrics] = useState<string>("");
@@ -136,6 +147,10 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
 
   const saveSongDescription = () => {
     setSavedSongDescription(songDescription);
+  };
+
+  const saveIsInstrumental = () => {
+    setSavedIsInstrumental(isInstrumental);
   };
 
   const saveLyrics = () => {
@@ -158,6 +173,8 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
     setCreationMethod("ai-full");
     setSongDescription("");
     setSavedSongDescription("");
+    setIsInstrumental(false);
+    setSavedIsInstrumental(false);
     setLyrics("");
     setSavedLyrics("");
     setSettings({});
@@ -168,6 +185,7 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
     emotion: savedEmotion,
     creationMethod,
     songDescription: savedSongDescription,
+    isInstrumental: savedIsInstrumental,
     lyrics: savedLyrics,
     settings: savedSettings,
   };
@@ -185,6 +203,8 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
         setCreationMethod,
         songDescription,
         setSongDescription,
+        isInstrumental,
+        setIsInstrumental,
         lyrics,
         setLyrics,
         settings,
@@ -193,6 +213,7 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
         saveEmotion,
         saveCreationMethod,
         saveSongDescription,
+        saveIsInstrumental,
         saveLyrics,
         saveSettings,
         songData,

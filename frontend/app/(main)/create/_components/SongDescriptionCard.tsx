@@ -12,12 +12,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 export const SongDescriptionCard: React.FC = () => {
   const {
     songDescription,
     setSongDescription,
     saveSongDescription,
+    isInstrumental,
+    setIsInstrumental,
+    saveIsInstrumental,
     setCurrentStep,
     songData,
   } = useSongCreation();
@@ -25,7 +29,10 @@ export const SongDescriptionCard: React.FC = () => {
   // Local state for fast typing
   const [localDescription, setLocalDescription] = useState(songDescription);
 
-  // Debounce global state updates
+  // Local state for fast switching
+  const [localIsInstumental, setLocalIsInstrumental] = useState(isInstrumental);
+
+  // Debounce global state updates - decription
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (localDescription !== songDescription) {
@@ -36,6 +43,17 @@ export const SongDescriptionCard: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [localDescription, setSongDescription, songDescription]);
 
+  // Debounce global state updates - instrumental
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localIsInstumental !== isInstrumental) {
+        setIsInstrumental(localIsInstumental);
+      }
+    }, 300); // Adjust delay for responsiveness
+
+    return () => clearTimeout(timeout);
+  }, [localIsInstumental, setIsInstrumental, isInstrumental]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setLocalDescription(e.target.value);
@@ -43,12 +61,25 @@ export const SongDescriptionCard: React.FC = () => {
     []
   );
 
+  const handleSwitchChange = useCallback((checked: boolean) => {
+    setLocalIsInstrumental(checked);
+  }, []);
+
   const handleNext = useCallback(() => {
     if (localDescription.trim()) {
       saveSongDescription();
       setCurrentStep(7);
     }
-  }, [localDescription, saveSongDescription, setCurrentStep]);
+    if (localIsInstumental) {
+      saveIsInstrumental();
+    }
+  }, [
+    localDescription,
+    saveSongDescription,
+    setCurrentStep,
+    localIsInstumental,
+    saveIsInstrumental,
+  ]);
 
   const handleBack = useCallback(() => {
     setCurrentStep(2);
@@ -86,6 +117,15 @@ export const SongDescriptionCard: React.FC = () => {
             <p className="font-medium">{songData.emotion}</p>
           </div>
         )}
+
+        {/* check if song is instrumental or not */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Instrumental</label>
+          <Switch
+            checked={localIsInstumental}
+            onCheckedChange={handleSwitchChange}
+          />
+        </div>
       </CardContent>
 
       <CardFooter className="flex justify-between">

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { UserType } from "@/types";
 
 const creationMethods = [
   {
@@ -22,6 +23,7 @@ const creationMethods = [
     icon: "🤖",
     details:
       "AI will generate lyrics and configure settings like genre, mood, voice, etc.",
+    requiredCredits: 80,
   },
   {
     id: "ai-lyrics" as CreationMethod,
@@ -30,6 +32,7 @@ const creationMethods = [
     icon: "✍️",
     details:
       "AI creates lyrics from your description, you choose genre, voice, etc.",
+    requiredCredits: 50,
   },
   {
     id: "manual" as CreationMethod,
@@ -37,10 +40,15 @@ const creationMethods = [
     description: "You provide lyrics and configure all settings",
     icon: "🎵",
     details: "You write lyrics and configure all song settings manually",
+    requiredCredits: 20,
   },
 ];
 
-export const CreationMethodCard: React.FC = () => {
+export const CreationMethodCard = ({
+  currentUser,
+}: {
+  currentUser: UserType | undefined;
+}) => {
   const {
     creationMethod,
     setCreationMethod,
@@ -93,20 +101,39 @@ export const CreationMethodCard: React.FC = () => {
               "w-full p-4 rounded-lg border-2 transition-all duration-200 hover:scale-[1.02] text-left mt-2",
               creationMethod === method.id
                 ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50"
+                : "border-border hover:border-primary/50",
+              currentUser &&
+                currentUser.credits !== null &&
+                currentUser.credits !== undefined &&
+                currentUser.credits < method.requiredCredits &&
+                "opacity-50 pointer-events-none"
             )}
+            disabled={
+              currentUser &&
+              currentUser.credits !== null &&
+              currentUser.credits !== undefined &&
+              currentUser.credits < method.requiredCredits
+            }
           >
-            <div className="flex items-start space-x-4">
-              <span className="text-3xl">{method.icon}</span>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">{method.title}</h3>
-                <p className="text-muted-foreground mb-2">
-                  {method.description}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {method.details}
-                </p>
+            <div className="flex justify-between">
+              <div className="flex items-start space-x-4">
+                <span className="text-3xl">{method.icon}</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1">{method.title}</h3>
+                  <p className="text-muted-foreground mb-2">
+                    {method.description}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {method.details}
+                  </p>
+                </div>
               </div>
+
+              <Button variant={"outline"} size={"sm"}>
+                <p className="text-xs text-muted-foreground">
+                  Requires {method.requiredCredits} credits
+                </p>
+              </Button>
             </div>
           </button>
         ))}

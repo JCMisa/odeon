@@ -31,6 +31,7 @@ export const SongGenerationCard: React.FC = () => {
         console.log(
           `User Emotion: ${songData.emotion}. Song Description: ${songData.songDescription}`
         );
+        console.log("Is song instrumental: ", songData.isInstrumental);
         break;
       case "ai-lyrics":
         const aiLyricsSettings = [
@@ -53,6 +54,7 @@ export const SongGenerationCard: React.FC = () => {
         ].filter(Boolean);
         console.log("User Lyrics - Description:", songData.songDescription);
         console.log("User Song - Settings:", aiLyricsSettings);
+        console.log("Is song instrumental: ", songData.isInstrumental);
         break;
       case "manual":
         const manualSettings = [
@@ -75,6 +77,7 @@ export const SongGenerationCard: React.FC = () => {
         ].filter(Boolean);
         console.log("Manual - Song Settings:", manualSettings);
         console.log("Manual - Song Lyrics:", songData.lyrics);
+        console.log("Is song instrumental: ", songData.isInstrumental);
         break;
     }
 
@@ -174,6 +177,13 @@ export const SongGenerationCard: React.FC = () => {
                   </p>
                 </div>
               )}
+
+              <div className="flex justify-between p-2 bg-muted rounded">
+                <span className="text-muted-foreground">Instrumental:</span>
+                <span className="font-medium">
+                  {songData.isInstrumental ? "Yes" : "No"}
+                </span>
+              </div>
 
               {/* Settings Summary */}
               {Object.keys(songData.settings).length > 0 && (

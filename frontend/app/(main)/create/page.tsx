@@ -12,16 +12,56 @@ import { SettingsConfigurationCard } from "./_components/SettingsConfigurationCa
 import { SongGenerationCard } from "./_components/SongGenerationCard";
 import Image from "next/image";
 import { DotPattern } from "@/components/magicui/dot-pattern";
+import { useEffect, useState, useCallback } from "react";
+import { getCurrentUser } from "@/actions/user";
+import { useRouter } from "next/navigation";
+import { UserType } from "@/types";
 
 const SongCreationFlow = () => {
+  const [currentUser, setCurrentUser] = useState<UserType | undefined>(
+    undefined
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const { currentStep } = useSongCreation();
 
+  const fetchUser = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const result = await getCurrentUser();
+
+      if (!result.success) {
+        if (result.redirect) {
+          router.push(result.redirect);
+          return;
+        }
+        setError(result.error || "Failed to fetch user");
+        return;
+      }
+
+      setCurrentUser(result.data);
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+      setError("Failed to fetch user data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
   const renderCurrentStep = () => {
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
+
     switch (currentStep) {
       case 1:
         return <EmotionSelectionCard />;
       case 2:
-        return <CreationMethodCard />;
+        return <CreationMethodCard currentUser={currentUser} />;
       case 3:
         return <SongDescriptionCard />;
       case 6:
@@ -46,7 +86,6 @@ const SongCreationFlow = () => {
         )}
       />
 
-      {/* center headset image */}
       <Image
         src={"/icon-1.png"}
         alt="icon1"
@@ -54,9 +93,7 @@ const SongCreationFlow = () => {
         height={900}
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-50 z-0"
       />
-      {/* center headset image */}
 
-      {/* floating images */}
       <Image
         src={"/icon-2.png"}
         alt="icon1"
@@ -92,11 +129,8 @@ const SongCreationFlow = () => {
           animationDelay: "0.6s",
         }}
       />
-      {/* floating images */}
 
-      {/* cards */}
       <div className="w-[60%] z-10">{renderCurrentStep()}</div>
-      {/* cards */}
 
       <DotPattern
         width={20}
