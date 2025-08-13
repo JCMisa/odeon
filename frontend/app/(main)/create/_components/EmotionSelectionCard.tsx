@@ -62,7 +62,7 @@ export const EmotionSelectionCard: React.FC = () => {
   const canProceed = customEmotion.trim() || selectedEmotion;
 
   return (
-    <Card className="w-full max-w-md mx-auto h-[500px]">
+    <Card className="w-full max-w-lg mx-auto h-[500px]">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
           How are you feeling today?
@@ -80,14 +80,14 @@ export const EmotionSelectionCard: React.FC = () => {
               key={option.value}
               onClick={() => handleEmotionSelect(option.value)}
               className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105",
+                "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105 overflow-hidden",
                 selectedEmotion === option.value
                   ? "border-primary bg-primary/10"
                   : "border-border hover:border-primary/50"
               )}
             >
               <span className="text-2xl mb-1">{option.emoji}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground truncate">
                 {option.label}
               </span>
             </button>

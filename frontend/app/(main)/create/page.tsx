@@ -1,6 +1,5 @@
 "use client";
 
-import { InteractiveGridPattern } from "@/components/magicui/interactive-grid-pattern";
 import {
   SongCreationProvider,
   useSongCreation,
@@ -11,6 +10,8 @@ import { CreationMethodCard } from "./_components/CreationMethodCard";
 import { SongDescriptionCard } from "./_components/SongDescriptionCard";
 import { SettingsConfigurationCard } from "./_components/SettingsConfigurationCard";
 import { SongGenerationCard } from "./_components/SongGenerationCard";
+import Image from "next/image";
+import { DotPattern } from "@/components/magicui/dot-pattern";
 
 const SongCreationFlow = () => {
   const { currentStep } = useSongCreation();
@@ -33,18 +34,78 @@ const SongCreationFlow = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-full relative flex-col overflow-hidden">
-      <InteractiveGridPattern
+    <div className="flex items-center justify-center h-screen w-full flex-col overflow-hidden relative">
+      <DotPattern
+        width={20}
+        height={20}
+        cx={1}
+        cy={1}
+        cr={1}
         className={cn(
-          "[mask-image:radial-gradient(400px_circle_at_center,white,transparent)]",
-          "inset-x-0 w-full h-full "
+          "[mask-image:linear-gradient(to_bottom_right,white,transparent,transparent)] "
         )}
       />
+
+      {/* center headset image */}
+      <Image
+        src={"/icon-1.png"}
+        alt="icon1"
+        width={900}
+        height={900}
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-50 z-0"
+      />
+      {/* center headset image */}
+
+      {/* floating images */}
+      <Image
+        src={"/icon-2.png"}
+        alt="icon1"
+        width={100}
+        height={100}
+        className="absolute top-20 left-32 z-0 animate-customBounce"
+        style={{
+          animation: "customBounce 2s ease-in-out infinite",
+          animationDelay: "0s",
+        }}
+      />
+
+      <Image
+        src={"/icon-3.png"}
+        alt="icon1"
+        width={150}
+        height={150}
+        className="absolute top-80 right-32 z-0 animate-customBounce"
+        style={{
+          animation: "customBounce 2.2s ease-in-out infinite",
+          animationDelay: "0.3s",
+        }}
+      />
+
+      <Image
+        src={"/icon-4.png"}
+        alt="icon1"
+        width={80}
+        height={80}
+        className="absolute bottom-40 left-52 z-0 animate-customBounce"
+        style={{
+          animation: "customBounce 2.4s ease-in-out infinite",
+          animationDelay: "0.6s",
+        }}
+      />
+      {/* floating images */}
+
+      {/* cards */}
       <div className="w-[60%] z-10">{renderCurrentStep()}</div>
-      <InteractiveGridPattern
+      {/* cards */}
+
+      <DotPattern
+        width={20}
+        height={20}
+        cx={1}
+        cy={1}
+        cr={1}
         className={cn(
-          "[mask-image:radial-gradient(400px_circle_at_center,white,transparent)]",
-          "inset-x-0 w-full h-full ml-[1rem] rotate-180"
+          "[mask-image:linear-gradient(to_top_left,white,transparent,transparent)] "
         )}
       />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSongCreation } from "@/contexts/EmotionContext";
 import {
   Card,
@@ -22,16 +22,37 @@ export const SongDescriptionCard: React.FC = () => {
     songData,
   } = useSongCreation();
 
-  const handleNext = () => {
-    if (songDescription.trim()) {
-      saveSongDescription();
-      setCurrentStep(7); // Go directly to generation (AI-full only)
-    }
-  };
+  // Local state for fast typing
+  const [localDescription, setLocalDescription] = useState(songDescription);
 
-  const handleBack = () => {
+  // Debounce global state updates
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localDescription !== songDescription) {
+        setSongDescription(localDescription);
+      }
+    }, 300); // Adjust delay for responsiveness
+
+    return () => clearTimeout(timeout);
+  }, [localDescription, setSongDescription, songDescription]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setLocalDescription(e.target.value);
+    },
+    []
+  );
+
+  const handleNext = useCallback(() => {
+    if (localDescription.trim()) {
+      saveSongDescription();
+      setCurrentStep(7);
+    }
+  }, [localDescription, saveSongDescription, setCurrentStep]);
+
+  const handleBack = useCallback(() => {
     setCurrentStep(2);
-  };
+  }, [setCurrentStep]);
 
   return (
     <Card className="w-full max-w-2xl mx-auto h-[500px]">
@@ -48,9 +69,9 @@ export const SongDescriptionCard: React.FC = () => {
         <div className="space-y-2">
           <label className="text-sm font-medium">Song Description</label>
           <Textarea
-            placeholder="e.g., A song about finding hope in difficult times, with a message of resilience and inner strength..."
-            value={songDescription}
-            onChange={(e) => setSongDescription(e.target.value)}
+            placeholder="e.g., A song about finding hope in difficult times..."
+            value={localDescription}
+            onChange={handleChange}
             className="min-h-[120px] resize-none"
           />
           <p className="text-xs text-muted-foreground">
@@ -59,7 +80,6 @@ export const SongDescriptionCard: React.FC = () => {
           </p>
         </div>
 
-        {/* Preview of selected emotion */}
         {songData.emotion && (
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Your emotion:</p>
@@ -78,10 +98,10 @@ export const SongDescriptionCard: React.FC = () => {
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!songDescription.trim()}
+          disabled={!localDescription.trim()}
           className="cursor-pointer"
         >
-          Next
+          Review Song
         </Button>
       </CardFooter>
     </Card>

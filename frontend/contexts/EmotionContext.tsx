@@ -5,14 +5,14 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 export type CreationMethod = "ai-full" | "ai-lyrics" | "manual";
 
 export interface SongSettings {
-  genre?: string;
+  genre?: string | string[];
   voice?: string;
-  style?: string;
   key?: string;
   tempo?: string;
-  instrument?: string;
-  energy?: string;
-  atmosphere?: string;
+  instrument?: string | string[];
+  energy?: string | string[];
+  atmosphere?: string | string[];
+  style?: string;
 }
 
 export interface SongCreationData {
@@ -65,7 +65,7 @@ interface SongCreationContextType {
   // Settings
   settings: SongSettings;
   setSettings: (settings: SongSettings) => void;
-  updateSetting: (key: keyof SongSettings, value: string) => void;
+  updateSetting: (key: keyof SongSettings, value: string | string[]) => void;
 
   // Save and navigation
   saveEmotion: () => void;
@@ -146,7 +146,7 @@ export const SongCreationProvider: React.FC<SongCreationProviderProps> = ({
     setSavedSettings(settings);
   };
 
-  const updateSetting = (key: keyof SongSettings, value: string) => {
+  const updateSetting = (key: keyof SongSettings, value: string | string[]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 

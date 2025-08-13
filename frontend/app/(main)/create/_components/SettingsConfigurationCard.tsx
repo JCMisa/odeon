@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSongCreation } from "@/contexts/EmotionContext";
 import {
   Card,
@@ -13,9 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 
-// Emotion to mood mapping
+// ===== Static Data =====
 const emotionToMood: Record<string, string> = {
   happy: "uplifting",
   sad: "melancholic",
@@ -30,7 +36,6 @@ const emotionToMood: Record<string, string> = {
   confident: "empowering",
   contemplative: "introspective",
 };
-
 const genreOptions = [
   "melodic techno",
   "hip-hop",
@@ -48,7 +53,6 @@ const genreOptions = [
   "metal",
   "indie",
 ];
-
 const voiceOptions = [
   "male vocal",
   "female vocal",
@@ -58,22 +62,6 @@ const voiceOptions = [
   "robotic vocal",
   "whisper vocal",
 ];
-
-const styleOptions = [
-  "emotional",
-  "driving",
-  "atmospheric",
-  "energetic",
-  "calm",
-  "aggressive",
-  "romantic",
-  "mysterious",
-  "uplifting",
-  "dark",
-  "playful",
-  "serious",
-];
-
 const tempoOptions = [
   "60 bpm",
   "80 bpm",
@@ -83,7 +71,6 @@ const tempoOptions = [
   "160 bpm",
   "180 bpm",
 ];
-
 const keyOptions = [
   "major key",
   "minor key",
@@ -102,7 +89,6 @@ const keyOptions = [
   "B minor",
   "F minor",
 ];
-
 const instrumentOptions = [
   "synthesizer",
   "piano",
@@ -115,7 +101,6 @@ const instrumentOptions = [
   "electronic",
   "acoustic",
 ];
-
 const energyOptions = [
   "driving",
   "energetic",
@@ -125,7 +110,6 @@ const energyOptions = [
   "powerful",
   "gentle",
 ];
-
 const atmosphereOptions = [
   "atmospheric",
   "ethereal",
@@ -137,7 +121,8 @@ const atmosphereOptions = [
   "epic",
 ];
 
-export const SettingsConfigurationCard: React.FC = () => {
+// ===== Component =====
+const SettingsConfigurationCardComponent: React.FC = () => {
   const {
     settings,
     updateSetting,
@@ -151,82 +136,187 @@ export const SettingsConfigurationCard: React.FC = () => {
     songDescription,
     setSongDescription,
     saveSongDescription,
+    selectedEmotion,
+    customEmotion,
   } = useSongCreation();
 
-  // Auto-fill mood based on emotion
+  const computedStyle = customEmotion.trim()
+    ? customEmotion.trim()
+    : emotionToMood[selectedEmotion.toLowerCase()] || selectedEmotion;
+
+  // Local states for faster input
+  const [localLyrics, setLocalLyrics] = useState(lyrics);
+  const [localDescription, setLocalDescription] = useState(songDescription);
+
+  // Debounce sync to context
   useEffect(() => {
-    if (songData.emotion && !settings.style) {
-      const mood = emotionToMood[songData.emotion.toLowerCase()] || "emotional";
-      updateSetting("style", mood);
-    }
-  }, [songData.emotion, settings.style, updateSetting]);
+    const timeout = setTimeout(() => {
+      if (localLyrics !== lyrics) setLyrics(localLyrics);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [localLyrics, lyrics, setLyrics]);
 
-  const handleNext = () => {
-    saveSettings();
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localDescription !== songDescription)
+        setSongDescription(localDescription);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [localDescription, songDescription, setSongDescription]);
 
-    // Save lyrics if in manual mode
-    if (creationMethod === "manual" && lyrics.trim()) {
-      saveLyrics();
-    }
-
-    // Save song description if in AI-lyrics mode
-    if (creationMethod === "ai-lyrics" && songDescription.trim()) {
-      saveSongDescription();
-    }
-
-    setCurrentStep(7); // Go to final review/generation
-  };
-
-  const handleBack = () => {
-    setCurrentStep(2); // Back to creation method selection
-  };
-
-  const renderOptionGroup = (
-    title: string,
-    options: string[],
-    settingKey: keyof typeof settings,
-    placeholder?: string
-  ) => (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{title}</label>
-      <div className="grid grid-cols-2 gap-2">
-        {options.map((option) => (
-          <button
-            key={option}
-            onClick={() => updateSetting(settingKey, option)}
-            className={cn(
-              "p-2 text-sm rounded border transition-all",
-              settings[settingKey] === option
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:border-primary/50"
-            )}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-      {placeholder && (
-        <Input
-          placeholder={placeholder}
-          value={settings[settingKey] || ""}
-          onChange={(e) => updateSetting(settingKey, e.target.value)}
-          className="mt-2"
-        />
-      )}
-    </div>
+  // Multi-select
+  const multiSelectUpdate = useCallback(
+    (key: keyof typeof settings, value: string, limit: number) => {
+      const current = Array.isArray(settings[key])
+        ? (settings[key] as string[])
+        : [];
+      if (current.includes(value)) {
+        updateSetting(
+          key,
+          current.filter((v) => v !== value)
+        );
+      } else if (current.length < limit) {
+        updateSetting(key, [...current, value]);
+      }
+    },
+    [settings, updateSetting]
   );
 
-  const canProceed = () => {
-    if (creationMethod === "manual") {
-      return lyrics.trim() && Object.keys(settings).length > 0;
-    } else if (creationMethod === "ai-lyrics") {
-      return songDescription.trim() && Object.keys(settings).length > 0;
-    }
-    return Object.keys(settings).length > 0;
-  };
+  // Single-select
+  const singleSelectUpdate = useCallback(
+    (key: keyof typeof settings, value: string) => {
+      updateSetting(key, value);
+    },
+    [updateSetting]
+  );
 
+  // Navigation
+  const handleNext = useCallback(() => {
+    saveSettings();
+    if (creationMethod === "manual" && localLyrics.trim()) saveLyrics();
+    if (creationMethod === "ai-lyrics" && localDescription.trim())
+      saveSongDescription();
+    setCurrentStep(7);
+  }, [
+    creationMethod,
+    localLyrics,
+    localDescription,
+    saveLyrics,
+    saveSongDescription,
+    saveSettings,
+    setCurrentStep,
+  ]);
+
+  const handleBack = useCallback(() => {
+    setCurrentStep(2);
+  }, [setCurrentStep]);
+
+  // Render helpers
+  const renderMultiSelectGroup = useCallback(
+    (
+      title: string,
+      options: string[],
+      settingKey: keyof typeof settings,
+      limit = 3,
+      placeholder?: string
+    ) => {
+      const selected = Array.isArray(settings[settingKey])
+        ? (settings[settingKey] as string[])
+        : [];
+      return (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            {title} {limit > 1 && `(max ${limit})`}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {options.map((option) => {
+              const isSelected = selected.includes(option);
+              const isDisabled = !isSelected && selected.length >= limit;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => multiSelectUpdate(settingKey, option, limit)}
+                  disabled={isDisabled}
+                  className={cn(
+                    "p-2 text-sm rounded border transition-all",
+                    isSelected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : isDisabled
+                        ? "border-border bg-muted text-muted-foreground cursor-not-allowed"
+                        : "border-border hover:border-primary/50"
+                  )}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+          {placeholder && (
+            <Input
+              placeholder={placeholder}
+              value={selected.join(", ")}
+              readOnly
+              className="mt-2"
+            />
+          )}
+        </div>
+      );
+    },
+    [settings, multiSelectUpdate]
+  );
+
+  const renderSingleSelectGroup = useCallback(
+    (
+      title: string,
+      options: string[],
+      settingKey: keyof typeof settings,
+      placeholder?: string
+    ) => (
+      <div className="space-y-2">
+        <label className="text-sm font-medium">{title}</label>
+        <div className="grid grid-cols-2 gap-2">
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => singleSelectUpdate(settingKey, option)}
+              className={cn(
+                "p-2 text-sm rounded border transition-all",
+                settings[settingKey] === option
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:border-primary/50"
+              )}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        {placeholder && (
+          <Input
+            placeholder={placeholder}
+            value={(settings[settingKey] as string) || ""}
+            onChange={(e) => singleSelectUpdate(settingKey, e.target.value)}
+            className="mt-2"
+          />
+        )}
+      </div>
+    ),
+    [settings, singleSelectUpdate]
+  );
+
+  // Button state
+  const canProceed = useMemo(() => {
+    if (creationMethod === "manual")
+      return localLyrics.trim() && Object.keys(settings).length > 0;
+    if (creationMethod === "ai-lyrics")
+      return localDescription.trim() && Object.keys(settings).length > 0;
+    return Object.keys(settings).length > 0;
+  }, [creationMethod, localLyrics, localDescription, settings]);
+
+  // UI
   return (
-    <Card className="w-full max-w-4xl mx-auto h-[500px] flex flex-col">
+    <Card className="w-full max-w-6xl mx-auto h-[600px] flex flex-col">
       <CardHeader className="text-center flex-shrink-0">
         <CardTitle className="text-2xl font-bold">
           Configure Song Settings
@@ -237,94 +327,144 @@ export const SettingsConfigurationCard: React.FC = () => {
           {creationMethod === "ai-lyrics" && " and describe your lyrics"}
         </CardDescription>
       </CardHeader>
-
-      <CardContent className="space-y-6 overflow-y-auto custom-scrollbar flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {renderOptionGroup(
-            "Genre",
-            genreOptions,
-            "genre",
-            "Or enter custom genre"
-          )}
-          {renderOptionGroup(
-            "Voice Type",
-            voiceOptions,
-            "voice",
-            "Or enter custom voice"
-          )}
-          {renderOptionGroup(
-            "Style",
-            styleOptions,
-            "style",
-            "Or enter custom style"
-          )}
-          {renderOptionGroup("Tempo", tempoOptions, "tempo")}
-          {renderOptionGroup("Musical Key", keyOptions, "key")}
-          {renderOptionGroup("Instrument", instrumentOptions, "instrument")}
-          {renderOptionGroup("Energy", energyOptions, "energy")}
-          {renderOptionGroup("Atmosphere", atmosphereOptions, "atmosphere")}
+      <CardContent className="flex-1 flex gap-8 overflow-y-auto custom-scrollbar">
+        {/* Left: Settings */}
+        <div className="w-full max-w-[420px]">
+          <Accordion type="multiple" defaultValue={["genre"]}>
+            <AccordionItem value="genre">
+              <AccordionTrigger>Genre(s)</AccordionTrigger>
+              <AccordionContent>
+                {renderMultiSelectGroup(
+                  "Genre(s)",
+                  genreOptions,
+                  "genre",
+                  2,
+                  "Or enter custom genre"
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="voice">
+              <AccordionTrigger>Voice Type</AccordionTrigger>
+              <AccordionContent>
+                {renderSingleSelectGroup(
+                  "Voice Type",
+                  voiceOptions,
+                  "voice",
+                  "Or enter custom voice"
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="mood">
+              <AccordionTrigger>
+                Mood (auto-filled from emotion)
+              </AccordionTrigger>
+              <AccordionContent>
+                <Input value={computedStyle} readOnly className="mt-2" />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="tempo">
+              <AccordionTrigger>Tempo</AccordionTrigger>
+              <AccordionContent>
+                {renderSingleSelectGroup("Tempo", tempoOptions, "tempo")}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="key">
+              <AccordionTrigger>Musical Key</AccordionTrigger>
+              <AccordionContent>
+                {renderSingleSelectGroup("Musical Key", keyOptions, "key")}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="instrument">
+              <AccordionTrigger>Instrument(s)</AccordionTrigger>
+              <AccordionContent>
+                {renderMultiSelectGroup(
+                  "Instrument(s)",
+                  instrumentOptions,
+                  "instrument",
+                  3
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="energy">
+              <AccordionTrigger>Energy</AccordionTrigger>
+              <AccordionContent>
+                {renderMultiSelectGroup("Energy", energyOptions, "energy", 2)}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="atmosphere">
+              <AccordionTrigger>Atmosphere</AccordionTrigger>
+              <AccordionContent>
+                {renderMultiSelectGroup(
+                  "Atmosphere",
+                  atmosphereOptions,
+                  "atmosphere",
+                  2
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
-        {/* Lyrics Description for AI-lyrics mode */}
-        {creationMethod === "ai-lyrics" && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Describe your lyrics</label>
-            <Textarea
-              placeholder="Describe the lyrics you want AI to generate... e.g., A song about finding hope in difficult times, with a message of resilience and inner strength..."
-              value={songDescription}
-              onChange={(e) => setSongDescription(e.target.value)}
-              className="min-h-[100px] resize-none"
-            />
-            <p className="text-xs text-muted-foreground">
-              Be as detailed as possible to help AI create better lyrics
-            </p>
-          </div>
-        )}
-
-        {/* Lyrics Input for Manual mode */}
-        {creationMethod === "manual" && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Your Lyrics</label>
-            <Textarea
-              placeholder="Enter your song lyrics here...&#10;&#10;Verse 1:&#10;[Your lyrics here]&#10;&#10;Chorus:&#10;[Your lyrics here]&#10;&#10;Verse 2:&#10;[Your lyrics here]"
-              value={lyrics}
-              onChange={(e) => setLyrics(e.target.value)}
-              className="min-h-[150px] resize-none font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              You can format your lyrics with line breaks and sections
-            </p>
-          </div>
-        )}
-
-        {/* Summary of current data */}
-        <div className="p-4 bg-muted rounded-lg space-y-2">
-          <h3 className="font-medium">Current Song Data:</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Emotion:</span>{" "}
-              {songData.emotion}
+        {/* Right: Inputs */}
+        <div className="flex-1 flex flex-col gap-6">
+          {creationMethod === "ai-lyrics" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Describe your lyrics
+              </label>
+              <Textarea
+                placeholder="Describe the lyrics you want AI to generate..."
+                value={localDescription}
+                onChange={(e) => setLocalDescription(e.target.value)}
+                className="min-h-[180px] resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                Be as detailed as possible to help AI create better lyrics
+              </p>
             </div>
-            <div>
-              <span className="text-muted-foreground">Creation Method:</span>{" "}
-              {creationMethod}
+          )}
+          {creationMethod === "manual" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Lyrics</label>
+              <Textarea
+                placeholder="Enter your song lyrics here..."
+                value={localLyrics}
+                onChange={(e) => setLocalLyrics(e.target.value)}
+                className="min-h-[180px] resize-none font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                You can format your lyrics with line breaks and sections
+              </p>
             </div>
-            {songData.songDescription && (
-              <div className="col-span-2">
-                <span className="text-muted-foreground">Description:</span>{" "}
-                {songData.songDescription.substring(0, 100)}...
+          )}
+          {/* Summary */}
+          <div className="p-4 bg-muted rounded-lg space-y-2 mt-4">
+            <h3 className="font-medium">Current Song Data:</h3>
+            <div className="flex flex-col gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Emotion:</span>{" "}
+                {songData.emotion}
               </div>
-            )}
-            {songData.lyrics && (
-              <div className="col-span-2">
-                <span className="text-muted-foreground">Lyrics:</span>{" "}
-                {songData.lyrics.substring(0, 100)}...
+              <div>
+                <span className="text-muted-foreground">Creation Method:</span>{" "}
+                {creationMethod}
               </div>
-            )}
+              {songData.songDescription && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Description:</span>{" "}
+                  {songData.songDescription.substring(0, 100)}...
+                </div>
+              )}
+              {songData.lyrics && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Lyrics:</span>{" "}
+                  {songData.lyrics.substring(0, 100)}...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
-
       <CardFooter className="flex justify-between flex-shrink-0">
         <Button
           variant="outline"
@@ -335,12 +475,18 @@ export const SettingsConfigurationCard: React.FC = () => {
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!canProceed()}
+          disabled={!canProceed}
           className="cursor-pointer"
         >
-          Generate Song
+          Review Song
         </Button>
       </CardFooter>
     </Card>
   );
 };
+
+SettingsConfigurationCardComponent.displayName = "SettingsConfigurationCard";
+
+export const SettingsConfigurationCard = React.memo(
+  SettingsConfigurationCardComponent
+);

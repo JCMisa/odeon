@@ -210,3 +210,15 @@
     scrollbar-width: 5px;
   }
 }
+
+@keyframes customBounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 0.9;
+  }
+}
