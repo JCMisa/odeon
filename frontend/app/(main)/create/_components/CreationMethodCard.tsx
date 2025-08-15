@@ -94,7 +94,7 @@ export const CreationMethodCard = ({
 
       <CardContent className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
         {creationMethods.map((method) => (
-          <button
+          <div
             key={method.id}
             onClick={() => handleMethodSelect(method.id)}
             className={cn(
@@ -106,14 +106,8 @@ export const CreationMethodCard = ({
                 currentUser.credits !== null &&
                 currentUser.credits !== undefined &&
                 currentUser.credits < method.requiredCredits &&
-                "opacity-50 pointer-events-none"
+                "opacity-50 pointer-events-none disabled:cursor-not-allowed"
             )}
-            disabled={
-              currentUser &&
-              currentUser.credits !== null &&
-              currentUser.credits !== undefined &&
-              currentUser.credits < method.requiredCredits
-            }
           >
             <div className="flex justify-between">
               <div className="flex items-start space-x-4">
@@ -135,7 +129,7 @@ export const CreationMethodCard = ({
                 </p>
               </Button>
             </div>
-          </button>
+          </div>
         ))}
       </CardContent>
 

@@ -147,6 +147,8 @@ const SettingsConfigurationCardComponent: React.FC = () => {
   // Local states for faster input
   const [localLyrics, setLocalLyrics] = useState(lyrics);
   const [localDescription, setLocalDescription] = useState(songDescription);
+  const [customInstrument, setCustomInstrument] = useState<string>("");
+  const [customEnergy, setCustomEnergy] = useState<string>("");
 
   // Debounce sync to context
   useEffect(() => {
@@ -181,6 +183,68 @@ const SettingsConfigurationCardComponent: React.FC = () => {
     },
     [settings, updateSetting]
   );
+
+  const handleCustomInstrumentChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomInstrument(value);
+      if (value.includes(",")) {
+        const newInstrument = value.split(",")[0].trim();
+        if (newInstrument) {
+          const current = Array.isArray(settings.instrument)
+            ? settings.instrument
+            : [];
+          if (!current.includes(newInstrument) && current.length < 3) {
+            updateSetting("instrument", [...current, newInstrument]);
+          }
+          setCustomInstrument("");
+        }
+      }
+    },
+    [settings, updateSetting]
+  );
+
+  const handleAddCustomInstrument = useCallback(() => {
+    const newInstrument = customInstrument.trim();
+    if (newInstrument) {
+      const current = Array.isArray(settings.instrument)
+        ? settings.instrument
+        : [];
+      if (!current.includes(newInstrument) && current.length < 3) {
+        updateSetting("instrument", [...current, newInstrument]);
+      }
+      setCustomInstrument("");
+    }
+  }, [customInstrument, settings, updateSetting]);
+
+  const handleCustomEnergyChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomEnergy(value);
+      if (value.includes(",")) {
+        const newEnergy = value.split(",")[0].trim();
+        if (newEnergy) {
+          const current = Array.isArray(settings.energy) ? settings.energy : [];
+          if (!current.includes(newEnergy) && current.length < 2) {
+            updateSetting("energy", [...current, newEnergy]);
+          }
+          setCustomEnergy("");
+        }
+      }
+    },
+    [settings, updateSetting]
+  );
+
+  const handleAddCustomEnergy = useCallback(() => {
+    const newEnergy = customEnergy.trim();
+    if (newEnergy) {
+      const current = Array.isArray(settings.energy) ? settings.energy : [];
+      if (!current.includes(newEnergy) && current.length < 2) {
+        updateSetting("energy", [...current, newEnergy]);
+      }
+      setCustomEnergy("");
+    }
+  }, [customEnergy, settings, updateSetting]);
 
   // Single-select
   const singleSelectUpdate = useCallback(
@@ -223,36 +287,110 @@ const SettingsConfigurationCardComponent: React.FC = () => {
       const selected = Array.isArray(settings[settingKey])
         ? (settings[settingKey] as string[])
         : [];
+
+      const isCustomSection =
+        settingKey === "instrument" || settingKey === "energy";
+
+      const renderTag = (option: string) => {
+        const isSelected = selected.includes(option);
+        const isPredefined = options.includes(option);
+        const isDisabled = !isSelected && selected.length >= limit;
+
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => multiSelectUpdate(settingKey, option, limit)}
+            disabled={isDisabled}
+            className={cn(
+              "flex items-center gap-1 p-2 text-sm rounded border transition-all",
+              isSelected
+                ? "border-primary bg-primary/10 text-primary"
+                : isDisabled
+                  ? "border-border bg-muted text-muted-foreground cursor-not-allowed"
+                  : "border-border hover:border-primary/50"
+            )}
+          >
+            {option}
+            {isSelected && !isPredefined && (
+              <span className="text-xs ml-1 opacity-50">✕</span>
+            )}
+          </button>
+        );
+      };
+
       return (
         <div className="space-y-2">
           <label className="text-sm font-medium">
             {title} {limit > 1 && `(max ${limit})`}
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            {options.map((option) => {
-              const isSelected = selected.includes(option);
-              const isDisabled = !isSelected && selected.length >= limit;
-              return (
-                <button
-                  key={option}
+          <div className="grid grid-cols-2 gap-2">{options.map(renderTag)}</div>
+
+          {isCustomSection && (
+            <>
+              {/* Display selected custom instruments */}
+              <div className="flex flex-wrap gap-2 my-2">
+                {selected
+                  .filter((item) => !options.includes(item))
+                  .map((item) => (
+                    <Button
+                      key={item}
+                      variant={"outline"}
+                      size={"sm"}
+                      onClick={() => multiSelectUpdate(settingKey, item, limit)}
+                    >
+                      {item} <span className="ml-2 text-xs opacity-50">✕</span>
+                    </Button>
+                  ))}
+              </div>
+
+              {/* Custom Input */}
+              <div className="mt-4 flex items-center gap-2">
+                <Input
+                  placeholder={`Add custom ${settingKey}...`}
+                  value={
+                    settingKey === "instrument"
+                      ? customInstrument
+                      : customEnergy
+                  }
+                  onChange={
+                    settingKey === "instrument"
+                      ? handleCustomInstrumentChange
+                      : handleCustomEnergyChange
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (settingKey === "instrument") {
+                        handleAddCustomInstrument();
+                      } else {
+                        handleAddCustomEnergy();
+                      }
+                    }
+                  }}
+                />
+                <Button
                   type="button"
-                  onClick={() => multiSelectUpdate(settingKey, option, limit)}
-                  disabled={isDisabled}
-                  className={cn(
-                    "p-2 text-sm rounded border transition-all",
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : isDisabled
-                        ? "border-border bg-muted text-muted-foreground cursor-not-allowed"
-                        : "border-border hover:border-primary/50"
-                  )}
+                  onClick={() => {
+                    if (settingKey === "instrument") {
+                      handleAddCustomInstrument();
+                    } else {
+                      handleAddCustomEnergy();
+                    }
+                  }}
+                  disabled={
+                    (settingKey === "instrument" && !customInstrument.trim()) ||
+                    (settingKey === "energy" && !customEnergy.trim()) ||
+                    selected.length >= limit
+                  }
                 >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-          {placeholder && (
+                  Add
+                </Button>
+              </div>
+            </>
+          )}
+
+          {placeholder && !isCustomSection && (
             <Input
               placeholder={placeholder}
               value={selected.join(", ")}
@@ -263,7 +401,16 @@ const SettingsConfigurationCardComponent: React.FC = () => {
         </div>
       );
     },
-    [settings, multiSelectUpdate]
+    [
+      settings,
+      multiSelectUpdate,
+      customInstrument,
+      customEnergy,
+      handleAddCustomInstrument,
+      handleCustomInstrumentChange,
+      handleAddCustomEnergy,
+      handleCustomEnergyChange,
+    ]
   );
 
   const renderSingleSelectGroup = useCallback(

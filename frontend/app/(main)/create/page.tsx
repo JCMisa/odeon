@@ -16,6 +16,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getCurrentUser } from "@/actions/user";
 import { useRouter } from "next/navigation";
 import { UserType } from "@/types";
+import { LoaderCircleIcon } from "lucide-react";
 
 const SongCreationFlow = () => {
   const [currentUser, setCurrentUser] = useState<UserType | undefined>(
@@ -54,7 +55,12 @@ const SongCreationFlow = () => {
   }, [fetchUser]);
 
   const renderCurrentStep = () => {
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading)
+      return (
+        <div className="flex items-center justify-center h-screen">
+          <LoaderCircleIcon className="size-5 animate-spin" />
+        </div>
+      );
     if (error) return <div>Error: {error}</div>;
 
     switch (currentStep) {

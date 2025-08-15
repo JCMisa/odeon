@@ -12,29 +12,32 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ConfettiAnimation } from "@/components/custom/ConfettiAnimation";
+import { LoaderCircleIcon } from "lucide-react";
+import { GenerateRequest, generateSong } from "@/actions/generation";
+import { toast } from "sonner";
 
 export const SongGenerationCard: React.FC = () => {
   const { songData, setCurrentStep, resetData, creationMethod } =
     useSongCreation();
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const [isGenerated, setIsGenerated] = useState(false);
   // for confetti
   const [showConfetti, setShowConfetti] = useState(false);
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
+    let fullDescribedSong = "";
+    let describedLyrics = "";
+    let lyrics = "";
+    let prompt = "";
 
-    // Console logging based on creation method
     switch (songData.creationMethod) {
       case "ai-full":
-        console.log(
-          `User Emotion: ${songData.emotion}. Song Description: ${songData.songDescription}`
-        );
-        console.log("Is song instrumental: ", songData.isInstrumental);
+        fullDescribedSong = `User Emotion: ${songData.emotion}. Song Description: ${songData.songDescription}`;
         break;
       case "ai-lyrics":
-        const aiLyricsSettings = [
+        prompt = `${[
+          songData.emotion,
           ...(Array.isArray(songData.settings.genre)
             ? songData.settings.genre
             : [songData.settings.genre]),
@@ -51,13 +54,14 @@ export const SongGenerationCard: React.FC = () => {
           ...(Array.isArray(songData.settings.atmosphere)
             ? songData.settings.atmosphere
             : [songData.settings.atmosphere]),
-        ].filter(Boolean);
-        console.log("User Lyrics - Description:", songData.songDescription);
-        console.log("User Song - Settings:", aiLyricsSettings);
-        console.log("Is song instrumental: ", songData.isInstrumental);
+        ]
+          .filter(Boolean)
+          .join(", ")}`;
+        describedLyrics = songData.songDescription as string;
         break;
       case "manual":
-        const manualSettings = [
+        prompt = `${[
+          songData.emotion,
           ...(Array.isArray(songData.settings.genre)
             ? songData.settings.genre
             : [songData.settings.genre]),
@@ -74,36 +78,80 @@ export const SongGenerationCard: React.FC = () => {
           ...(Array.isArray(songData.settings.atmosphere)
             ? songData.settings.atmosphere
             : [songData.settings.atmosphere]),
-        ].filter(Boolean);
-        console.log("Manual - Song Settings:", manualSettings);
-        console.log("Manual - Song Lyrics:", songData.lyrics);
-        console.log("Is song instrumental: ", songData.isInstrumental);
+        ]
+          .filter(Boolean)
+          .join(", ")}`;
+        lyrics = songData.lyrics as string;
         break;
     }
 
-    // Simulate generation progress
-    const interval = setInterval(() => {
-      setGenerationProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 500);
+    console.log(
+      "fullDescribedSong to be passed to AI to generate prompt and lyrics: ",
+      fullDescribedSong
+    );
+    console.log("prompt in array with comma separated string: ", prompt);
+    console.log(
+      "description of the lyrics to be passed to AI to generate lyrics: ",
+      describedLyrics
+    );
+    console.log(
+      "manual generated lyrics to be used directly by AceStep: ",
+      lyrics
+    );
+    console.log("is song instrumental: ", songData.isInstrumental);
 
-    // Here you would call your actual generation API
-    // await generateSong(songData);
+    // generate the song
+    let requestBody: GenerateRequest;
+
+    if (songData.creationMethod === "ai-full") {
+      requestBody = {
+        fullDescribedSong: fullDescribedSong,
+        instrumental: songData.isInstrumental,
+        requiredCredits: 80,
+      };
+    } else if (songData.creationMethod === "ai-lyrics") {
+      requestBody = {
+        prompt: prompt,
+        describedLyrics: describedLyrics,
+        instrumental: songData.isInstrumental,
+        requiredCredits: 50,
+      };
+    } else {
+      requestBody = {
+        prompt: prompt,
+        lyrics: lyrics,
+        instrumental: songData.isInstrumental,
+        requiredCredits: 20,
+      };
+    }
+
+    try {
+      setIsGenerating(true);
+
+      const result = await generateSong(requestBody);
+
+      if (result?.success) {
+        setIsGenerated(true);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+        toast.success("Song generated successfully!");
+      }
+    } catch (error) {
+      console.log("song generation error: ", error);
+      toast.error("Song generation failed. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
 
     // For now, just simulate completion
-    setTimeout(() => {
-      setIsGenerating(false);
-      setGenerationProgress(100);
-      setShowConfetti(true);
+    // setTimeout(() => {
+    //   setIsGenerating(false);
+    //   setIsGenerated(true);
+    //   setShowConfetti(true);
 
-      // hide confetti after 5s
-      setTimeout(() => setShowConfetti(false), 5000);
-    }, 5000);
+    //   // hide confetti after 5s
+    //   setTimeout(() => setShowConfetti(false), 5000);
+    // }, 5000);
   };
 
   const handleBack = () => {
@@ -207,24 +255,8 @@ export const SongGenerationCard: React.FC = () => {
             </div>
           </div>
 
-          {/* Generation Progress */}
-          {isGenerating && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Generating your song...</span>
-                <span>{generationProgress}%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${generationProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
-
           {/* Generation Complete */}
-          {!isGenerating && generationProgress === 100 && (
+          {isGenerated && (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
               <p className="text-green-800 font-medium">
                 🎵 Song generated successfully!
@@ -256,16 +288,21 @@ export const SongGenerationCard: React.FC = () => {
             </Button>
           </div>
 
-          {!isGenerating && generationProgress < 100 && (
+          {!isGenerated && (
             <Button
               onClick={handleGenerate}
-              className="bg-primary cursor-pointer"
+              className="bg-primary cursor-pointer flex items-center justify-center"
+              disabled={isGenerating}
             >
-              Generate Song
+              {isGenerating ? (
+                <LoaderCircleIcon className="size-5 animate-spin" />
+              ) : (
+                "Generate Song"
+              )}
             </Button>
           )}
 
-          {generationProgress === 100 && (
+          {isGenerated && (
             <Button className="bg-green-600 hover:bg-green-700 cursor-pointer text-white">
               Download Song
             </Button>

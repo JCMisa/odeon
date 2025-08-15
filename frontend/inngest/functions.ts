@@ -24,9 +24,10 @@ export const generateSong = inngest.createFunction(
   },
   { event: "generate-song-event" },
   async ({ event, step }) => {
-    const { songId } = event.data as {
+    const { songId, requiredCredits } = event.data as {
       songId: string;
       userId: string;
+      requiredCredits: number;
     };
 
     // a step to get the song from database and call fastapi endpoint based on available data provided by user
@@ -240,7 +241,7 @@ export const generateSong = inngest.createFunction(
         return await db
           .update(user)
           .set({
-            credits: sql`${user.credits} - 1`,
+            credits: sql`${user.credits} - ${requiredCredits}`,
           })
           .where(eq(user.id, userId as string));
       });
