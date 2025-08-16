@@ -15,8 +15,11 @@ import { ConfettiAnimation } from "@/components/custom/ConfettiAnimation";
 import { LoaderCircleIcon } from "lucide-react";
 import { GenerateRequest, generateSong } from "@/actions/generation";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const SongGenerationCard: React.FC = () => {
+  const router = useRouter();
+
   const { songData, setCurrentStep, resetData, creationMethod } =
     useSongCreation();
 
@@ -135,6 +138,9 @@ export const SongGenerationCard: React.FC = () => {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
         toast.success("Song generated successfully!");
+
+        // go back to home
+        router.push(`/result/${result.songId}`);
       }
     } catch (error) {
       console.log("song generation error: ", error);

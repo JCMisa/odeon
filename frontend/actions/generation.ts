@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export interface GenerateRequest {
   prompt?: string;
@@ -16,6 +18,11 @@ export interface GenerateRequest {
   instrumental?: boolean;
   requiredCredits: number;
 }
+
+// will help to revalidate multiple paths after a certain function was done
+const revalidatePaths = (paths: string[]) => {
+  paths.forEach((path) => revalidatePath(path));
+};
 
 export const generateSong = async (generateRequest: GenerateRequest) => {
   try {
@@ -27,12 +34,12 @@ export const generateSong = async (generateRequest: GenerateRequest) => {
       redirect("/auth/sign-in");
     }
 
-    const result1 = await queueSong(generateRequest, 3, session.user.id);
+    const result = await queueSong(generateRequest, 7.5, session.user.id);
     // const result2 = await queueSong(generateRequest, 15, session.user.id);
-    if (result1.success) {
-      return { success: true };
+    if (result.success) {
+      return { success: true, songId: result.songId };
     }
-    revalidatePath("/create");
+    revalidatePaths(["/", "/create"]);
   } catch (error) {
     console.error("Error in generateSong:", error);
     throw new Error("Failed to generate song");
@@ -89,5 +96,27 @@ export const queueSong = async (
   } catch (error) {
     console.error("Error in queueSong:", error);
     throw new Error("Failed to queue song");
+  }
+};
+
+export const getPresignedUrl = async (key: string) => {
+  try {
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_ID!,
+      },
+    });
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: key,
+    });
+
+    return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  } catch (error) {
+    console.error("Error in getPresignedUrl:", error);
+    throw new Error("Failed to get presigned URL");
   }
 };

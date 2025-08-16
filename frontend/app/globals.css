@@ -222,3 +222,197 @@
     opacity: 0.9;
   }
 }
+
+/* empty state design */
+/* From Uiverse.io by csozidev */
+/* Spotify music card made by: csozi | Website: www.csozi.hu*/
+
+.card-empty {
+  position: relative;
+  width: 450px; /* Increased from 250px */
+  height: 220px; /* Increased from 120px */
+  border-radius: 10px;
+  padding: 20px; /* Increased padding */
+}
+
+.top-empty {
+  position: relative;
+  width: 100%;
+  display: flex;
+  gap: 20px; /* Increased gap */
+}
+
+.pfp-empty {
+  position: relative;
+  top: 10px; /* Adjusted position */
+  left: 10px; /* Adjusted position */
+  height: 70px; /* Increased height */
+  width: 70px; /* Increased width */
+  border-radius: 10px; /* Increased border radius */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-1-empty {
+  font-size: 40px; /* Increased font size */
+  font-weight: bolder;
+}
+
+.title-2-empty {
+  font-size: 20px; /* Increased font size */
+  font-weight: bold;
+}
+
+.time-empty {
+  width: 90%;
+  height: 10px; /* Increased height */
+  border-radius: 5px; /* Increased border radius */
+  position: absolute;
+  left: 5%;
+  bottom: 40px; /* Adjusted position */
+}
+
+.elapsed-empty {
+  width: 42%;
+  background-color: #f43f5e;
+  height: 100%;
+  border-radius: 5px; /* Increased border radius */
+}
+
+.controls-empty {
+  display: flex;
+  position: absolute;
+  bottom: 50px; /* Adjusted position */
+  left: 0;
+  width: 100%;
+  justify-content: center;
+}
+
+.volume-empty {
+  height: 100%;
+  width: 70px; /* Increased width */
+}
+
+.air-empty {
+  height: 100%;
+  width: 70px; /* Increased width */
+}
+
+.controls-empty svg {
+  cursor: pointer;
+  transition: 0.1s;
+}
+
+.controls-empty svg:hover {
+  color: #f43f5e;
+}
+
+.volume-empty {
+  opacity: 0;
+  position: relative;
+  transition: 0.2s;
+}
+
+.volume-empty .slider-empty {
+  height: 8px; /* Increased height */
+  width: 80%;
+  border-radius: 4px; /* Increased border radius */
+  margin-top: 15px; /* Adjusted margin */
+  margin-left: 10%;
+}
+
+.volume-empty .slider-empty .green-empty {
+  background-color: #f43f5e;
+  height: 100%;
+  width: 80%;
+  border-radius: 5px; /* Increased border radius */
+}
+
+.volume-empty .circle-empty {
+  height: 12px; /* Increased size */
+  width: 12px; /* Increased size */
+  border-radius: 6px;
+  position: absolute;
+  right: 20%;
+  top: 60%;
+}
+
+.volume_button-empty:hover ~ .volume-empty {
+  opacity: 1;
+}
+
+.timetext-empty {
+  font-size: 14px; /* Increased font size */
+  position: absolute;
+}
+
+.time_now-empty {
+  bottom: 20px; /* Adjusted position */
+  left: 20px; /* Adjusted position */
+}
+
+.time_full-empty {
+  bottom: 20px; /* Adjusted position */
+  right: 20px; /* Adjusted position */
+}
+
+.playing-empty {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  gap: 2px; /* Increased gap */
+  width: 50px; /* Increased width */
+  height: 30px; /* Increased height */
+}
+
+.greenline-empty {
+  background-color: #f43f5e;
+  height: 30px; /* Increased height */
+  width: 3px; /* Increased width */
+  position: relative;
+  transform-origin: bottom;
+}
+
+.line-1-empty {
+  animation: infinite playing 1s ease-in-out;
+  animation-delay: 0.2s;
+}
+
+.line-2-empty {
+  animation: infinite playing 1s ease-in-out;
+  animation-delay: 0.5s;
+}
+
+.line-3-empty {
+  animation: infinite playing 1s ease-in-out;
+  animation-delay: 0.6s;
+}
+
+.line-4-empty {
+  animation: infinite playing 1s ease-in-out;
+  animation-delay: 0s;
+}
+
+.line-5-empty {
+  animation: infinite playing 1s ease-in-out;
+  animation-delay: 0.4s;
+}
+
+@keyframes playing {
+  0% {
+    transform: scaleY(0.1);
+  }
+
+  33% {
+    transform: scaleY(0.6);
+  }
+
+  66% {
+    transform: scaleY(0.9);
+  }
+
+  100% {
+    transform: scaleY(0.1);
+  }
+}
