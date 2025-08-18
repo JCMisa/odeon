@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { desc, eq, getTableColumns } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import TrackList from "./TrackList";
 
 const TrackListFetcher = async () => {
   // check if authenticated
@@ -33,7 +34,7 @@ const TrackListFetcher = async () => {
   const songsWithThumbnails = await Promise.all(
     songs.map(async (song) => {
       const thumbnailUrl = song.thumbnailS3Key
-        ? getPresignedUrl(song.thumbnailS3Key)
+        ? await getPresignedUrl(song.thumbnailS3Key)
         : null;
 
       return {
@@ -56,8 +57,9 @@ const TrackListFetcher = async () => {
     })
   );
 
-  return songs.length > 0 ? (
-    songs.map((song) => <div key={song.id}>{song.thumbnailS3Key}</div>)
+  return songs.length > 0 || songsWithThumbnails ? (
+    // songs.map((song) => <div key={song.id}>{song.thumbnailS3Key}</div>)
+    <TrackList tracks={songsWithThumbnails} />
   ) : (
     <Empty
       title="No Song Yet"

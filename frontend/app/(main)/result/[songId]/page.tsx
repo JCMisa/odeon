@@ -44,13 +44,11 @@ const ResulePage = async ({ params }: ResultProps) => {
 
       <div className="flex flex-col mt-10 space-y-20">
         <div>
-          <h1 className="font-bold text-4xl tracking-widest] w-[40%] truncate">
-            {generatedSong.title}
-          </h1>
+          <h1 className="font-bold text-4xl tracking-widest">Generated Song</h1>
 
           <div className="p-5 flex items-center justify-center h-full">
             {generatedSong ? (
-              <p>{generatedSong.s3Key}</p>
+              <p>{generatedSong.title}</p>
             ) : (
               <Empty
                 title="No Song Found With This ID"
@@ -61,7 +59,7 @@ const ResulePage = async ({ params }: ResultProps) => {
         </div>
 
         <div>
-          <h1 className="font-bold text-4xl tracking-widest]">
+          <h1 className="font-bold text-4xl tracking-widest">
             Your Song Tracks
           </h1>
           <div className="p-5 flex items-center justify-center h-full">

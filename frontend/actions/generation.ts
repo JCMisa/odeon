@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { and, eq, isNotNull, or, sql } from "drizzle-orm";
 
 export interface GenerateRequest {
   prompt?: string;
@@ -18,11 +19,6 @@ export interface GenerateRequest {
   instrumental?: boolean;
   requiredCredits: number;
 }
-
-// will help to revalidate multiple paths after a certain function was done
-const revalidatePaths = (paths: string[]) => {
-  paths.forEach((path) => revalidatePath(path));
-};
 
 export const generateSong = async (generateRequest: GenerateRequest) => {
   try {
@@ -39,7 +35,7 @@ export const generateSong = async (generateRequest: GenerateRequest) => {
     if (result.success) {
       return { success: true, songId: result.songId };
     }
-    revalidatePaths(["/", "/create"]);
+    revalidatePath("/");
   } catch (error) {
     console.error("Error in generateSong:", error);
     throw new Error("Failed to generate song");
@@ -60,7 +56,7 @@ export const queueSong = async (
       title = generateRequest.fullDescribedSong;
 
     // make the first letter of the title uppercase
-    title = title.charAt(0).toUpperCase() + title.slice(1);
+    title = title.charAt(0).toUpperCase() + title.slice(1); // todo: ask ai to generate title based on described lyrics or full described song
 
     const [insertedSong] = await db
       .insert(song)
@@ -119,4 +115,38 @@ export const getPresignedUrl = async (key: string) => {
     console.error("Error in getPresignedUrl:", error);
     throw new Error("Failed to get presigned URL");
   }
+};
+
+export const getPlayUrl = async (songId: string) => {
+  // check if authenticated
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
+  const [songData] = await db
+    .select({
+      s3Key: song.s3Key,
+    })
+    .from(song)
+    .where(
+      and(
+        eq(song.id, songId),
+        or(eq(song.userId, session.user.id), eq(song.published, true)),
+        isNotNull(song.s3Key)
+      )
+    )
+    .limit(1);
+
+  // increment listen count when song is played
+  await db
+    .update(song)
+    .set({
+      listenCount: sql`${song.listenCount} + 1`,
+    })
+    .where(eq(song.id, songId));
+
+  return getPresignedUrl(songData.s3Key!);
 };
