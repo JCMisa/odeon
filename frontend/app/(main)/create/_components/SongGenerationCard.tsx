@@ -16,6 +16,7 @@ import { LoaderCircleIcon } from "lucide-react";
 import { GenerateRequest, generateSong } from "@/actions/generation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export const SongGenerationCard: React.FC = () => {
   const router = useRouter();
@@ -131,7 +132,36 @@ export const SongGenerationCard: React.FC = () => {
     try {
       setIsGenerating(true);
 
-      const result = await generateSong(requestBody);
+      // set what would be the title is based on the available source inputs
+      let source = "Untitled";
+      if (requestBody.fullDescribedSong) source = requestBody.fullDescribedSong;
+      if (requestBody.describedLyrics) source = requestBody.describedLyrics;
+      if (requestBody.lyrics) source = requestBody.lyrics;
+
+      const titleResult = await axios.post(
+        "/api/generate-title",
+        {
+          source: source.trim(),
+        },
+        {
+          timeout: 30000, // 30 second timeout before aborting api call
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      let title = "Untitled";
+
+      if (
+        titleResult.status === 200 &&
+        titleResult.data &&
+        titleResult.data.title
+      ) {
+        title = titleResult.data.title;
+      }
+
+      const result = await generateSong(requestBody, title);
 
       if (result?.success) {
         setIsGenerated(true);

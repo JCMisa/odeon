@@ -20,7 +20,10 @@ export interface GenerateRequest {
   requiredCredits: number;
 }
 
-export const generateSong = async (generateRequest: GenerateRequest) => {
+export const generateSong = async (
+  generateRequest: GenerateRequest,
+  title: string
+) => {
   try {
     // check if authenticated
     const session = await auth.api.getSession({
@@ -30,7 +33,12 @@ export const generateSong = async (generateRequest: GenerateRequest) => {
       redirect("/auth/sign-in");
     }
 
-    const result = await queueSong(generateRequest, 7.5, session.user.id);
+    const result = await queueSong(
+      generateRequest,
+      7.5,
+      session.user.id,
+      title
+    );
     // const result2 = await queueSong(generateRequest, 15, session.user.id);
     if (result.success) {
       return { success: true, songId: result.songId };
@@ -45,24 +53,15 @@ export const generateSong = async (generateRequest: GenerateRequest) => {
 export const queueSong = async (
   generateRequest: GenerateRequest,
   guidanceScale: number,
-  userId: string
+  userId: string,
+  songTitle: string
 ) => {
   try {
-    // set what would be the title is based on the available inputs
-    let title = "Untitled";
-    if (generateRequest.describedLyrics)
-      title = generateRequest.describedLyrics;
-    if (generateRequest.fullDescribedSong)
-      title = generateRequest.fullDescribedSong;
-
-    // make the first letter of the title uppercase
-    title = title.charAt(0).toUpperCase() + title.slice(1); // todo: ask ai to generate title based on described lyrics or full described song
-
     const [insertedSong] = await db
       .insert(song)
       .values({
         userId: userId,
-        title: title,
+        title: songTitle,
         prompt: generateRequest.prompt,
         lyrics: generateRequest.lyrics,
         describedLyrics: generateRequest.describedLyrics,
