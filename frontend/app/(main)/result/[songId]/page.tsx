@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowLeftIcon, LoaderCircleIcon, MusicIcon } from "lucide-react";
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -6,9 +6,12 @@ import { redirect } from "next/navigation";
 import TrackListFetcher from "./_components/TrackListFetcher";
 import Link from "next/link";
 import { db } from "@/config/db";
-import { song } from "@/config/schema";
-import { eq } from "drizzle-orm";
+import { song, user } from "@/config/schema";
+import { eq, getTableColumns } from "drizzle-orm";
 import Empty from "@/components/custom/Empty";
+import ProcessingLoader from "@/components/custom/ProcessingLoader";
+import { getPresignedUrl } from "@/actions/generation";
+import GeneratedSongCard from "./_components/GeneratedSongCard";
 
 interface ResultProps {
   params: {
@@ -28,9 +31,20 @@ const ResulePage = async ({ params }: ResultProps) => {
   }
 
   const [generatedSong] = await db
-    .select()
+    .select({
+      ...getTableColumns(song),
+      userName: user.name,
+      userEmail: user.email,
+    })
     .from(song)
+    .leftJoin(user, eq(song.userId, user.id))
     .where(eq(song.id, songId));
+
+  // get thumbnail presigned url
+  let thumbnailUrl = "";
+  if (generatedSong) {
+    thumbnailUrl = await getPresignedUrl(generatedSong.thumbnailS3Key || "");
+  }
 
   return (
     <main className="p-10 flex flex-col">
@@ -48,7 +62,31 @@ const ResulePage = async ({ params }: ResultProps) => {
 
           <div className="p-5 flex items-center justify-center h-full">
             {generatedSong ? (
-              <p>{generatedSong.title}</p>
+              generatedSong.status === "processing" ? (
+                <div className="flex flex-col gap-2 items-center justify-center">
+                  <ProcessingLoader />
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <p className="text-sm">
+                      The song is processing. Please wait.
+                    </p>{" "}
+                    <MusicIcon className="size-4" />
+                  </div>
+                </div>
+              ) : generatedSong.status === "failed" ? (
+                <Empty
+                  title="Song Failed to Generate"
+                  subTitle="Please try again later."
+                />
+              ) : (
+                <div className="flex items-center justify-center">
+                  <GeneratedSongCard
+                    songTitle={generatedSong.title}
+                    songImage={thumbnailUrl || "/empty-img.png"}
+                    songOwnerName={generatedSong.userName || ""}
+                    songOwnerEmail={generatedSong.userEmail || ""}
+                  />
+                </div>
+              )
             ) : (
               <Empty
                 title="No Song Found With This ID"

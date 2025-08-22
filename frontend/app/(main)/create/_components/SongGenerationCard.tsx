@@ -17,6 +17,7 @@ import { GenerateRequest, generateSong } from "@/actions/generation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import confetti from "canvas-confetti";
 
 export const SongGenerationCard: React.FC = () => {
   const router = useRouter();
@@ -28,6 +29,36 @@ export const SongGenerationCard: React.FC = () => {
   const [isGenerated, setIsGenerated] = useState(false);
   // for confetti
   const [showConfetti, setShowConfetti] = useState(false);
+
+  const handleShowConfetti = () => {
+    const end = Date.now() + 3 * 1000; // 3 seconds
+    const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
+
+    const frame = () => {
+      if (Date.now() > end) return;
+
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.5 },
+        colors: colors,
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.5 },
+        colors: colors,
+      });
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
+  };
 
   const handleGenerate = async () => {
     let fullDescribedSong = "";
@@ -164,6 +195,7 @@ export const SongGenerationCard: React.FC = () => {
       const result = await generateSong(requestBody, title);
 
       if (result?.success) {
+        handleShowConfetti();
         setIsGenerated(true);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
@@ -178,16 +210,6 @@ export const SongGenerationCard: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
-
-    // For now, just simulate completion
-    // setTimeout(() => {
-    //   setIsGenerating(false);
-    //   setIsGenerated(true);
-    //   setShowConfetti(true);
-
-    //   // hide confetti after 5s
-    //   setTimeout(() => setShowConfetti(false), 5000);
-    // }, 5000);
   };
 
   const handleBack = () => {

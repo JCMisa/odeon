@@ -25,7 +25,9 @@ const Empty = ({
           </div>
           <div className="text-empty !mt-5 !overflow-hidden">
             <p className="title-1-empty !text-[22px] !truncate">{title}</p>
-            <p className="title-2-empty !text-[15px] !truncate">{subTitle}</p>
+            <p className="title-2-empty !text-[15px] !truncate !text-muted-foreground">
+              {subTitle}
+            </p>
           </div>
         </div>
 
