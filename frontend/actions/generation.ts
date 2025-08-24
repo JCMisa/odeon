@@ -94,7 +94,12 @@ export const queueSong = async (
   }
 };
 
-export const getPresignedUrl = async (key: string) => {
+export const getPresignedUrl = async (key: string | null) => {
+  // Return null if key is null, empty, or undefined
+  if (!key || key.trim() === "") {
+    return null;
+  }
+
   try {
     const s3Client = new S3Client({
       region: process.env.AWS_REGION!,
@@ -111,7 +116,21 @@ export const getPresignedUrl = async (key: string) => {
 
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
   } catch (error) {
-    console.error("Error in getPresignedUrl:", error);
+    console.error("Error in getPresignedUrl for key:", key, error);
+
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      if (error.message.includes("NoSuchKey")) {
+        throw new Error(
+          "File not found in storage. Please wait for generation to complete."
+        );
+      } else if (error.message.includes("AccessDenied")) {
+        throw new Error("Access denied to file. Please check permissions.");
+      } else if (error.message.includes("InvalidAccessKeyId")) {
+        throw new Error("Invalid AWS credentials. Please check configuration.");
+      }
+    }
+
     throw new Error("Failed to get presigned URL");
   }
 };
@@ -128,16 +147,33 @@ export const getPlayUrl = async (songId: string) => {
   const [songData] = await db
     .select({
       s3Key: song.s3Key,
+      status: song.status,
     })
     .from(song)
     .where(
       and(
         eq(song.id, songId),
-        or(eq(song.userId, session.user.id), eq(song.published, true)),
-        isNotNull(song.s3Key)
+        or(eq(song.userId, session.user.id), eq(song.published, true))
       )
     )
     .limit(1);
+
+  // Check if song exists
+  if (!songData) {
+    throw new Error("Song not found or access denied");
+  }
+
+  // Check if song is still processing
+  if (songData.status === "queued" || songData.status === "processing") {
+    throw new Error("Song is still being generated. Please wait.");
+  }
+
+  // Check if s3Key exists
+  if (!songData.s3Key) {
+    throw new Error(
+      "Audio file not ready yet. Please wait for generation to complete."
+    );
+  }
 
   // increment listen count when song is played
   await db
@@ -147,5 +183,11 @@ export const getPlayUrl = async (songId: string) => {
     })
     .where(eq(song.id, songId));
 
-  return getPresignedUrl(songData.s3Key!);
+  const presignedUrl = await getPresignedUrl(songData.s3Key);
+  if (!presignedUrl) {
+    throw new Error(
+      "Audio file not available. Please wait for generation to complete."
+    );
+  }
+  return presignedUrl;
 };

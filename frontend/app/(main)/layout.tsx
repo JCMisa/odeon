@@ -21,6 +21,7 @@ import BreadCrumbPageClient from "@/components/custom/BreadCrumbPageClient";
 import ModeToggle from "@/components/custom/ModeToggle";
 import LogoutButton from "./_components/LogoutButton";
 import Credits from "./_components/Credits";
+import Soundbar from "@/components/custom/Soundbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,8 +88,10 @@ export default async function RootLayout({
                     <Credits />
                   </div>
                 </main>
+
+                <Soundbar />
               </SidebarInset>
-            </SidebarProvider>{" "}
+            </SidebarProvider>
             <Toaster />
           </Providers>
         </ThemeProvider>

@@ -149,6 +149,11 @@ const SettingsConfigurationCardComponent: React.FC = () => {
   const [localDescription, setLocalDescription] = useState(songDescription);
   const [customInstrument, setCustomInstrument] = useState<string>("");
   const [customEnergy, setCustomEnergy] = useState<string>("");
+  const [customGenre, setCustomGenre] = useState<string>("");
+  const [customVoice, setCustomVoice] = useState<string>("");
+  const [customTempo, setCustomTempo] = useState<string>("");
+  const [customKey, setCustomKey] = useState<string>("");
+  const [customAtmosphere, setCustomAtmosphere] = useState<string>("");
 
   // Debounce sync to context
   useEffect(() => {
@@ -183,6 +188,138 @@ const SettingsConfigurationCardComponent: React.FC = () => {
     },
     [settings, updateSetting]
   );
+
+  // Custom input handlers for all settings
+  const handleCustomGenreChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomGenre(value);
+      if (value.includes(",")) {
+        const newGenre = value.split(",")[0].trim();
+        if (newGenre) {
+          const current = Array.isArray(settings.genre) ? settings.genre : [];
+          if (!current.includes(newGenre) && current.length < 2) {
+            updateSetting("genre", [...current, newGenre]);
+          }
+          setCustomGenre("");
+        }
+      }
+    },
+    [settings, updateSetting]
+  );
+
+  const handleAddCustomGenre = useCallback(() => {
+    const newGenre = customGenre.trim();
+    if (newGenre) {
+      const current = Array.isArray(settings.genre) ? settings.genre : [];
+      if (!current.includes(newGenre) && current.length < 2) {
+        updateSetting("genre", [...current, newGenre]);
+      }
+      setCustomGenre("");
+    }
+  }, [customGenre, settings, updateSetting]);
+
+  const handleCustomVoiceChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomVoice(value);
+      if (value.includes(",")) {
+        const newVoice = value.split(",")[0].trim();
+        if (newVoice) {
+          updateSetting("voice", newVoice);
+          setCustomVoice("");
+        }
+      }
+    },
+    [updateSetting]
+  );
+
+  const handleAddCustomVoice = useCallback(() => {
+    const newVoice = customVoice.trim();
+    if (newVoice) {
+      updateSetting("voice", newVoice);
+      setCustomVoice("");
+    }
+  }, [customVoice, updateSetting]);
+
+  const handleCustomTempoChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomTempo(value);
+      if (value.includes(",")) {
+        const newTempo = value.split(",")[0].trim();
+        if (newTempo) {
+          updateSetting("tempo", newTempo);
+          setCustomTempo("");
+        }
+      }
+    },
+    [updateSetting]
+  );
+
+  const handleAddCustomTempo = useCallback(() => {
+    const newTempo = customTempo.trim();
+    if (newTempo) {
+      updateSetting("tempo", newTempo);
+      setCustomTempo("");
+    }
+  }, [customTempo, updateSetting]);
+
+  const handleCustomKeyChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomKey(value);
+      if (value.includes(",")) {
+        const newKey = value.split(",")[0].trim();
+        if (newKey) {
+          updateSetting("key", newKey);
+          setCustomKey("");
+        }
+      }
+    },
+    [updateSetting]
+  );
+
+  const handleAddCustomKey = useCallback(() => {
+    const newKey = customKey.trim();
+    if (newKey) {
+      updateSetting("key", newKey);
+      setCustomKey("");
+    }
+  }, [customKey, updateSetting]);
+
+  const handleCustomAtmosphereChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setCustomAtmosphere(value);
+      if (value.includes(",")) {
+        const newAtmosphere = value.split(",")[0].trim();
+        if (newAtmosphere) {
+          const current = Array.isArray(settings.atmosphere)
+            ? settings.atmosphere
+            : [];
+          if (!current.includes(newAtmosphere) && current.length < 2) {
+            updateSetting("atmosphere", [...current, newAtmosphere]);
+          }
+          setCustomAtmosphere("");
+        }
+      }
+    },
+    [settings, updateSetting]
+  );
+
+  const handleAddCustomAtmosphere = useCallback(() => {
+    const newAtmosphere = customAtmosphere.trim();
+    if (newAtmosphere) {
+      const current = Array.isArray(settings.atmosphere)
+        ? settings.atmosphere
+        : [];
+      if (!current.includes(newAtmosphere) && current.length < 2) {
+        updateSetting("atmosphere", [...current, newAtmosphere]);
+      }
+      setCustomAtmosphere("");
+    }
+  }, [customAtmosphere, settings, updateSetting]);
 
   const handleCustomInstrumentChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,8 +425,7 @@ const SettingsConfigurationCardComponent: React.FC = () => {
         ? (settings[settingKey] as string[])
         : [];
 
-      const isCustomSection =
-        settingKey === "instrument" || settingKey === "energy";
+      const isCustomSection = true; // All sections now have custom input
 
       const renderTag = (option: string) => {
         const isSelected = selected.includes(option);
@@ -319,6 +455,54 @@ const SettingsConfigurationCardComponent: React.FC = () => {
         );
       };
 
+      // Get custom input state and handlers based on setting key
+      const getCustomInputProps = () => {
+        switch (settingKey) {
+          case "genre":
+            return {
+              value: customGenre,
+              onChange: handleCustomGenreChange,
+              onAdd: handleAddCustomGenre,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customGenre.trim() || selected.length >= limit,
+            };
+          case "instrument":
+            return {
+              value: customInstrument,
+              onChange: handleCustomInstrumentChange,
+              onAdd: handleAddCustomInstrument,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customInstrument.trim() || selected.length >= limit,
+            };
+          case "energy":
+            return {
+              value: customEnergy,
+              onChange: handleCustomEnergyChange,
+              onAdd: handleAddCustomEnergy,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customEnergy.trim() || selected.length >= limit,
+            };
+          case "atmosphere":
+            return {
+              value: customAtmosphere,
+              onChange: handleCustomAtmosphereChange,
+              onAdd: handleAddCustomAtmosphere,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customAtmosphere.trim() || selected.length >= limit,
+            };
+          default:
+            return {
+              value: "",
+              onChange: () => {},
+              onAdd: () => {},
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: true,
+            };
+        }
+      };
+
+      const customProps = getCustomInputProps();
+
       return (
         <div className="space-y-2">
           <label className="text-sm font-medium">
@@ -328,7 +512,7 @@ const SettingsConfigurationCardComponent: React.FC = () => {
 
           {isCustomSection && (
             <>
-              {/* Display selected custom instruments */}
+              {/* Display selected custom items */}
               <div className="flex flex-wrap gap-2 my-2">
                 {selected
                   .filter((item) => !options.includes(item))
@@ -347,42 +531,20 @@ const SettingsConfigurationCardComponent: React.FC = () => {
               {/* Custom Input */}
               <div className="mt-4 flex items-center gap-2">
                 <Input
-                  placeholder={`Add custom ${settingKey}...`}
-                  value={
-                    settingKey === "instrument"
-                      ? customInstrument
-                      : customEnergy
-                  }
-                  onChange={
-                    settingKey === "instrument"
-                      ? handleCustomInstrumentChange
-                      : handleCustomEnergyChange
-                  }
+                  placeholder={customProps.placeholder}
+                  value={customProps.value}
+                  onChange={customProps.onChange}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      if (settingKey === "instrument") {
-                        handleAddCustomInstrument();
-                      } else {
-                        handleAddCustomEnergy();
-                      }
+                      customProps.onAdd();
                     }
                   }}
                 />
                 <Button
                   type="button"
-                  onClick={() => {
-                    if (settingKey === "instrument") {
-                      handleAddCustomInstrument();
-                    } else {
-                      handleAddCustomEnergy();
-                    }
-                  }}
-                  disabled={
-                    (settingKey === "instrument" && !customInstrument.trim()) ||
-                    (settingKey === "energy" && !customEnergy.trim()) ||
-                    selected.length >= limit
-                  }
+                  onClick={customProps.onAdd}
+                  disabled={customProps.disabled}
                 >
                   Add
                 </Button>
@@ -404,12 +566,18 @@ const SettingsConfigurationCardComponent: React.FC = () => {
     [
       settings,
       multiSelectUpdate,
+      customGenre,
       customInstrument,
       customEnergy,
-      handleAddCustomInstrument,
+      customAtmosphere,
+      handleCustomGenreChange,
+      handleAddCustomGenre,
       handleCustomInstrumentChange,
-      handleAddCustomEnergy,
+      handleAddCustomInstrument,
       handleCustomEnergyChange,
+      handleAddCustomEnergy,
+      handleCustomAtmosphereChange,
+      handleAddCustomAtmosphere,
     ]
   );
 
@@ -419,37 +587,130 @@ const SettingsConfigurationCardComponent: React.FC = () => {
       options: string[],
       settingKey: keyof typeof settings,
       placeholder?: string
-    ) => (
-      <div className="space-y-2">
-        <label className="text-sm font-medium">{title}</label>
-        <div className="grid grid-cols-2 gap-2">
-          {options.map((option) => (
-            <button
-              key={option}
+    ) => {
+      // Get custom input state and handlers based on setting key
+      const getCustomInputProps = () => {
+        switch (settingKey) {
+          case "voice":
+            return {
+              value: customVoice,
+              onChange: handleCustomVoiceChange,
+              onAdd: handleAddCustomVoice,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customVoice.trim(),
+            };
+          case "tempo":
+            return {
+              value: customTempo,
+              onChange: handleCustomTempoChange,
+              onAdd: handleAddCustomTempo,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customTempo.trim(),
+            };
+          case "key":
+            return {
+              value: customKey,
+              onChange: handleCustomKeyChange,
+              onAdd: handleAddCustomKey,
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: !customKey.trim(),
+            };
+          default:
+            return {
+              value: "",
+              onChange: () => {},
+              onAdd: () => {},
+              placeholder: `Add custom ${settingKey}...`,
+              disabled: true,
+            };
+        }
+      };
+
+      const customProps = getCustomInputProps();
+      const currentValue = settings[settingKey] as string;
+      const isCustomValue = currentValue && !options.includes(currentValue);
+
+      return (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">{title}</label>
+          <div className="grid grid-cols-2 gap-2">
+            {options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => singleSelectUpdate(settingKey, option)}
+                className={cn(
+                  "p-2 text-sm rounded border transition-all",
+                  settings[settingKey] === option
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {/* Display custom value if selected */}
+          {isCustomValue && (
+            <div className="flex flex-wrap gap-2 my-2">
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() => singleSelectUpdate(settingKey, "")}
+              >
+                {currentValue}{" "}
+                <span className="ml-2 text-xs opacity-50">✕</span>
+              </Button>
+            </div>
+          )}
+
+          {/* Custom Input */}
+          <div className="mt-4 flex items-center gap-2">
+            <Input
+              placeholder={customProps.placeholder}
+              value={customProps.value}
+              onChange={customProps.onChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  customProps.onAdd();
+                }
+              }}
+            />
+            <Button
               type="button"
-              onClick={() => singleSelectUpdate(settingKey, option)}
-              className={cn(
-                "p-2 text-sm rounded border transition-all",
-                settings[settingKey] === option
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-primary/50"
-              )}
+              onClick={customProps.onAdd}
+              disabled={customProps.disabled}
             >
-              {option}
-            </button>
-          ))}
+              Add
+            </Button>
+          </div>
+
+          {placeholder && (
+            <Input
+              placeholder={placeholder}
+              value={(settings[settingKey] as string) || ""}
+              onChange={(e) => singleSelectUpdate(settingKey, e.target.value)}
+              className="mt-2"
+            />
+          )}
         </div>
-        {placeholder && (
-          <Input
-            placeholder={placeholder}
-            value={(settings[settingKey] as string) || ""}
-            onChange={(e) => singleSelectUpdate(settingKey, e.target.value)}
-            className="mt-2"
-          />
-        )}
-      </div>
-    ),
-    [settings, singleSelectUpdate]
+      );
+    },
+    [
+      settings,
+      singleSelectUpdate,
+      customVoice,
+      customTempo,
+      customKey,
+      handleCustomVoiceChange,
+      handleAddCustomVoice,
+      handleCustomTempoChange,
+      handleAddCustomTempo,
+      handleCustomKeyChange,
+      handleAddCustomKey,
+    ]
   );
 
   // Button state

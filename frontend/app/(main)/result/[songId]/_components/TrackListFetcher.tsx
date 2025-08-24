@@ -33,9 +33,10 @@ const TrackListFetcher = async () => {
 
   const songsWithThumbnails = await Promise.all(
     songs.map(async (song) => {
-      const thumbnailUrl = song.thumbnailS3Key
-        ? await getPresignedUrl(song.thumbnailS3Key)
-        : null;
+      let thumbnailUrl = null;
+      if (song.thumbnailS3Key) {
+        thumbnailUrl = await getPresignedUrl(song.thumbnailS3Key);
+      }
 
       return {
         id: song.id,

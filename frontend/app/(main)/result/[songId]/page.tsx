@@ -41,9 +41,12 @@ const ResulePage = async ({ params }: ResultProps) => {
     .where(eq(song.id, songId));
 
   // get thumbnail presigned url
-  let thumbnailUrl = "";
-  if (generatedSong) {
-    thumbnailUrl = await getPresignedUrl(generatedSong.thumbnailS3Key || "");
+  let thumbnailUrl = "/empty-img.png";
+  if (generatedSong?.thumbnailS3Key) {
+    const presignedUrl = await getPresignedUrl(generatedSong.thumbnailS3Key);
+    if (presignedUrl) {
+      thumbnailUrl = presignedUrl;
+    }
   }
 
   return (
@@ -80,10 +83,12 @@ const ResulePage = async ({ params }: ResultProps) => {
               ) : (
                 <div className="flex items-center justify-center">
                   <GeneratedSongCard
+                    songId={generatedSong.id}
                     songTitle={generatedSong.title}
-                    songImage={thumbnailUrl || "/empty-img.png"}
+                    songImage={thumbnailUrl}
                     songOwnerName={generatedSong.userName || ""}
                     songOwnerEmail={generatedSong.userEmail || ""}
+                    songPrompts={generatedSong.prompt || ""}
                   />
                 </div>
               )

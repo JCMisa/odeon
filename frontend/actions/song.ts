@@ -29,3 +29,25 @@ export const setPublishedStatus = async (
 
   revalidatePath("/result");
 };
+
+export const renameSong = async (songId: string, newTitle: string) => {
+  // check if authenticated
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
+  const data = await db
+    .update(song)
+    .set({
+      title: newTitle,
+    })
+    .where(and(eq(song.id, songId), eq(song.userId, session.user.id)));
+
+  if (data) {
+    revalidatePath("/result");
+    return { success: true };
+  }
+};

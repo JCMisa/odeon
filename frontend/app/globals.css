@@ -532,3 +532,35 @@
     transform: scaleY(0.5);
   }
 }
+
+/* Custom spinning disk animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(244, 63, 94, 0.6);
+  }
+}
+
+.spinning-disk {
+  animation: spin-slow 3s linear infinite;
+}
+
+.spinning-disk:hover {
+  animation: spin-slow 1.5s linear infinite;
+}
+
+.disk-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

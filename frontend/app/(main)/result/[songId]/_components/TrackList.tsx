@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  DownloadIcon,
   Loader2Icon,
   LoaderCircleIcon,
+  MoreHorizontalIcon,
   MusicIcon,
   PlayIcon,
   RefreshCcwIcon,
@@ -17,6 +19,16 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import RenameDialog from "./RenameDialog";
+import Empty from "@/components/custom/Empty";
+import { useRouter } from "next/navigation";
+import { userPlayerStore } from "@/stores/use-player-store";
 
 export interface Track {
   id: string;
@@ -37,6 +49,10 @@ export interface Track {
 }
 
 const TrackList = ({ tracks }: { tracks: Track[] }) => {
+  const router = useRouter();
+
+  const setTrack = userPlayerStore((state) => state.setTrack);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
@@ -50,13 +66,41 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
 
   const handleTrackSelect = async (track: Track) => {
     if (loadingTrackId) return;
+
+    // Don't allow playing if song is still processing
+    if (track.status === "queued" || track.status === "processing") {
+      toast.error("Song is still being generated. Please wait.");
+      return;
+    }
+
     setLoadingTrackId(track.id);
 
-    const playUrl = await getPlayUrl(track.id);
-    setLoadingTrackId(null);
+    try {
+      const playUrl = await getPlayUrl(track.id);
+      setLoadingTrackId(null);
 
-    console.log(playUrl);
-    // play the song in the playbar
+      // play the song in the playbar
+      setTrack({
+        id: track.id,
+        title: track.title,
+        url: playUrl,
+        artwork: track.thumbnailUrl,
+        prompt: track.prompt,
+        createdByUserName: track.createdByUserName,
+      });
+    } catch (error) {
+      setLoadingTrackId(null);
+      console.error("Error getting play URL:", error);
+      toast.error("Failed to load song. Please try refreshing.");
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
   };
 
   return (
@@ -76,7 +120,7 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
             disabled={isRefreshing}
             variant={"outline"}
             size={"sm"}
-            onClick={() => {}}
+            onClick={handleRefresh}
           >
             {isRefreshing ? (
               <LoaderCircleIcon className="size-4 animate-spin mr-2" />
@@ -142,10 +186,13 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="text-muted-foreground truncate text-sm font-medium">
-                          Processing song..
+                          {track.status === "queued"
+                            ? "Queued for generation"
+                            : "Generating song..."}
                         </h3>
                         <p className="text-muted-foreground truncate text-xs">
-                          Refresh to check the status.
+                          This may take a few minutes. Refresh to check the
+                          status.
                         </p>
                       </div>
                     </div>
@@ -176,9 +223,13 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
                           {loadingTrackId === track.id ? (
-                            <LoaderCircleIcon className="size-4 animate-spin text-primary" />
+                            <div className="flex items-center justify-center p-1 rounded-md bg-neutral-100 dark:bg-neutral-900">
+                              <LoaderCircleIcon className="size-4 animate-spin text-primary" />
+                            </div>
                           ) : (
-                            <PlayIcon className="size-4 text-primary fill-primary" />
+                            <div className="flex items-center justify-center p-1 rounded-md bg-neutral-100 dark:bg-neutral-900">
+                              <PlayIcon className="size-4 text-primary fill-primary" />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -228,13 +279,66 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
                             "Unpublished"
                           )}
                         </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            className="cursor-pointer"
+                            asChild
+                          >
+                            <MoreHorizontalIcon className="size-5" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-sm"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+
+                                // Don't allow downloading if song is still processing
+                                if (
+                                  track.status === "queued" ||
+                                  track.status === "processing"
+                                ) {
+                                  toast.error(
+                                    "Song is still being generated. Please wait."
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  const playUrl = await getPlayUrl(track.id);
+                                  window.open(playUrl, "_blank"); // redirect user browser in new tab to start downloading
+                                } catch (error) {
+                                  console.error(
+                                    "Error getting download URL:",
+                                    error
+                                  );
+                                  toast.error(
+                                    "Failed to get download link. Please try refreshing."
+                                  );
+                                }
+                              }}
+                            >
+                              <DownloadIcon className="mr-1 size-5" /> Download
+                            </DropdownMenuItem>
+
+                            <RenameDialog track={track} />
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   );
               }
             })
           ) : (
-            <></>
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Empty
+                title="No Song Found"
+                subTitle={
+                  searchQuery
+                    ? "No tracks match your search."
+                    : "Create your first song to get started."
+                }
+              />
+            </div>
           )}
         </div>
       </div>

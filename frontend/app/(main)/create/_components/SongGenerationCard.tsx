@@ -199,10 +199,14 @@ export const SongGenerationCard: React.FC = () => {
         setIsGenerated(true);
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
-        toast.success("Song generated successfully!");
+        toast.success(
+          "Song queued for generation! Redirecting to results page..."
+        );
 
-        // go back to home
-        router.push(`/result/${result.songId}`);
+        // Wait a moment before redirecting to show the success message
+        setTimeout(() => {
+          router.push(`/result/${result.songId}`);
+        }, 2000);
       }
     } catch (error) {
       console.log("song generation error: ", error);

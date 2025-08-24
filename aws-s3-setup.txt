@@ -37,3 +37,56 @@
 > put them in modal dashboard together with the region and the bucket name
 
 > go to vscode > open terminal > pip install boto3 (used to interact with aws)
+
+=== CORS CONFIGURATION (REQUIRED FOR AUDIO PLAYBACK) ===
+
+> go to your S3 bucket in AWS Console
+
+> click on "Permissions" tab
+
+> scroll down to "Cross-origin resource sharing (CORS)"
+
+> click "Edit" and add this CORS configuration:
+
+[
+    {
+        "AllowedHeaders": [
+            "*"
+        ],
+        "AllowedMethods": [
+            "GET",
+            "HEAD",
+            "PUT",
+            "POST",
+            "DELETE"
+        ],
+        "AllowedOrigins": [
+            "http://localhost:3000",
+            "https://yourdomain.com",
+            "*"
+        ],
+        "ExposeHeaders": [
+            "ETag",
+            "x-amz-meta-custom-header"
+        ],
+        "MaxAgeSeconds": 3000
+    }
+]
+
+> click "Save changes"
+
+=== ALTERNATIVE: USE AWS CLI TO SET CORS ===
+
+> install AWS CLI if not already installed
+
+> configure AWS CLI with your credentials
+
+> create a file named "cors.json" with the above CORS configuration
+
+> run this command:
+aws s3api put-bucket-cors --bucket YOUR-BUCKET-NAME --cors-configuration file://cors.json
+
+=== FOR PRODUCTION ===
+
+> replace "http://localhost:3000" with your actual domain
+> replace "*" in AllowedOrigins with specific domains for security
