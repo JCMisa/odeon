@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/config/db";
-import { song } from "@/config/schema";
+import { song, like } from "@/config/schema";
 import { auth } from "@/lib/auth";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -49,5 +49,42 @@ export const renameSong = async (songId: string, newTitle: string) => {
   if (data) {
     revalidatePath("/result");
     return { success: true };
+  }
+};
+
+export const toggleLikeSong = async (songId: string) => {
+  // check if authenticated
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
+
+  const userId = session.user.id;
+
+  // Check if user already liked this song
+  const existingLike = await db
+    .select()
+    .from(like)
+    .where(and(eq(like.songId, songId), eq(like.userId, userId)));
+
+  if (existingLike.length > 0) {
+    // User already liked, so unlike
+    await db
+      .delete(like)
+      .where(and(eq(like.songId, songId), eq(like.userId, userId)));
+
+    revalidatePath("/");
+    return { success: true, liked: false };
+  } else {
+    // User hasn't liked, so like
+    await db.insert(like).values({
+      songId: songId,
+      userId: userId,
+    });
+
+    revalidatePath("/");
+    return { success: true, liked: true };
   }
 };

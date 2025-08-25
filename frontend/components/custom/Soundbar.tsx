@@ -245,12 +245,14 @@ const Soundbar = () => {
 
   if (!track) return null;
 
-  // Convert comma-separated prompts to array
+  // Handle both string and array types for track.prompt
   const promptsArray = track.prompt
-    ? track.prompt
-        .split(",")
-        .map((prompt) => prompt.trim())
-        .filter((prompt) => prompt.length > 0)
+    ? Array.isArray(track.prompt)
+      ? track.prompt.map((prompt) => prompt.name)
+      : track.prompt
+          .split(",")
+          .map((prompt) => prompt.trim())
+          .filter((prompt) => prompt.length > 0)
     : [];
 
   return (

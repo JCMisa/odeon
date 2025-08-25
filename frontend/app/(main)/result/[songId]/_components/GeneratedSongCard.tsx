@@ -3,6 +3,8 @@
 import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  HeartIcon,
+  LoaderCircleIcon,
   PauseIcon,
   PlayIcon,
   UserIcon,
@@ -13,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { userPlayerStore } from "@/stores/use-player-store";
 import { Button } from "@/components/ui/button";
 import { getPlayUrl } from "@/actions/generation";
+import { toggleLikeSong } from "@/actions/song";
 
 const GeneratedSongCard = ({
   songId,
@@ -21,27 +24,43 @@ const GeneratedSongCard = ({
   songOwnerName,
   songOwnerEmail,
   songPrompts,
+  listenCount = 0,
+  likeCount = 0,
+  showPlayButton = true,
 }: {
   songId: string;
   songTitle: string;
   songImage: string;
   songOwnerName: string;
   songOwnerEmail: string;
-  songPrompts: string;
+  songPrompts: string | Array<{ id: string; name: string }>;
+  listenCount: number;
+  likeCount: number;
+  showPlayButton?: boolean;
 }) => {
   const setTrack = userPlayerStore((state) => state.setTrack);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLiked, setIsLiked] = useState(likeCount > 0 ? true : false);
+  const [likesCount, setLikesCount] = useState(likeCount);
+  const [isLiking, setIsLiking] = useState(false);
 
-  // Convert comma-separated string to array and clean up whitespace
-  const promptsArray = songPrompts
-    .split(",")
-    .map((prompt) => prompt.trim())
-    .filter((prompt) => prompt.length > 0);
+  // Handle both string and array types for songPrompts
+  const promptsArray = Array.isArray(songPrompts)
+    ? songPrompts.map((prompt) => prompt.name)
+    : songPrompts
+        .split(",")
+        .map((prompt) => prompt.trim())
+        .filter((prompt) => prompt.length > 0);
 
   const handlePlay = async () => {
     setIsPlaying(true);
     const playUrl = await getPlayUrl(songId);
+
+    // Convert songPrompts to string for the player
+    const promptString = Array.isArray(songPrompts)
+      ? songPrompts.map((prompt) => prompt.name).join(", ")
+      : songPrompts;
 
     // play the song in the playbar
     setTrack({
@@ -49,7 +68,7 @@ const GeneratedSongCard = ({
       title: songTitle,
       url: playUrl,
       artwork: songImage,
-      prompt: songPrompts,
+      prompt: promptString,
       createdByUserName: songOwnerName,
     });
   };
@@ -66,6 +85,27 @@ const GeneratedSongCard = ({
       prompt: null,
       createdByUserName: null,
     });
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    setIsLiking(true);
+    try {
+      const result = await toggleLikeSong(songId);
+
+      if (result?.success) {
+        setIsLiked(result.liked);
+        setLikesCount(result.liked ? likesCount + 1 : likesCount - 1);
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert the optimistic update if there's an error
+      setIsLiked(!isLiked);
+      setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   return (
@@ -106,28 +146,47 @@ const GeneratedSongCard = ({
         </span>
       </div>
       {/* prev, play, next buttons */}
-      <div className="flex items-center gap-5">
-        <ChevronsLeftIcon className="size-10 cursor-pointer" />
-        {isPlaying ? (
-          <Button
-            variant={"ghost"}
-            size={"icon"}
-            onClick={handleStop}
-            className="cursor-pointer size-7"
-          >
-            <PauseIcon />
-          </Button>
-        ) : (
-          <Button
-            variant={"ghost"}
-            size={"icon"}
-            onClick={handlePlay}
-            className="cursor-pointer size-7"
-          >
-            <PlayIcon />
-          </Button>
-        )}
-        <ChevronsRightIcon className="size-10 cursor-pointer" />
+      {showPlayButton && (
+        <div className="flex items-center gap-5">
+          <ChevronsLeftIcon className="size-10 cursor-pointer" />
+          {isPlaying ? (
+            <Button
+              variant={"ghost"}
+              size={"icon"}
+              onClick={handleStop}
+              className="cursor-pointer size-7"
+            >
+              <PauseIcon />
+            </Button>
+          ) : (
+            <Button
+              variant={"ghost"}
+              size={"icon"}
+              onClick={handlePlay}
+              className="cursor-pointer size-7"
+            >
+              <PlayIcon />
+            </Button>
+          )}
+          <ChevronsRightIcon className="size-10 cursor-pointer" />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground w-full">
+        <span>{listenCount} listens</span>
+        <button
+          className="flex items-center gap-1 cursor-pointer"
+          onClick={handleLike}
+        >
+          {isLiking ? (
+            <LoaderCircleIcon className="size-4 animate-spin" />
+          ) : (
+            <HeartIcon
+              className={`size-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+            />
+          )}
+          {likesCount} likes
+        </button>
       </div>
 
       <div className="w-full flex flex-wrap gap-1 px-2">
