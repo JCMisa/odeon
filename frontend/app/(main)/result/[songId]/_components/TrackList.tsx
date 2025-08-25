@@ -248,6 +248,7 @@ const TrackList = ({ tracks }: { tracks: Track[] }) => {
                           {track.prompt}
                         </p>
                       </div>
+
                       {/* actions */}
                       <div className="flex items-center gap-2">
                         <Button

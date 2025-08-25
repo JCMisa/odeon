@@ -8,6 +8,11 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+// Helper function to revalidate multiple paths
+const revalidatePaths = (...paths: string[]) => {
+  paths.forEach((path) => revalidatePath(path));
+};
+
 export const setPublishedStatus = async (
   songId: string,
   published: boolean
@@ -27,7 +32,7 @@ export const setPublishedStatus = async (
     })
     .where(and(eq(song.id, songId), eq(song.userId, session.user.id)));
 
-  revalidatePath("/result");
+  revalidatePaths("/result", "/");
 };
 
 export const renameSong = async (songId: string, newTitle: string) => {
@@ -75,7 +80,7 @@ export const toggleLikeSong = async (songId: string) => {
       .delete(like)
       .where(and(eq(like.songId, songId), eq(like.userId, userId)));
 
-    revalidatePath("/");
+    revalidatePaths("/", "/explore", `/result/${songId}`);
     return { success: true, liked: false };
   } else {
     // User hasn't liked, so like
@@ -84,7 +89,7 @@ export const toggleLikeSong = async (songId: string) => {
       userId: userId,
     });
 
-    revalidatePath("/");
+    revalidatePaths("/", "/explore", `/result/${songId}`);
     return { success: true, liked: true };
   }
 };

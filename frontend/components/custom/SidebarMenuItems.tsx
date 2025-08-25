@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { HomeIcon, MusicIcon } from "lucide-react";
+import { HomeIcon, MusicIcon, TelescopeIcon } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "../ui/sidebar";
 
 // Menu items.
@@ -16,6 +16,12 @@ let items = [
     title: "Create",
     url: "/create",
     icon: MusicIcon,
+    active: false,
+  },
+  {
+    title: "Explore",
+    url: "/explore",
+    icon: TelescopeIcon,
     active: false,
   },
 ];

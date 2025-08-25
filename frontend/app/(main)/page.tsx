@@ -3,7 +3,7 @@ import Empty from "@/components/custom/Empty";
 import { db } from "@/config/db";
 import { song, user, like, category, songCategory } from "@/config/schema";
 import { auth } from "@/lib/auth";
-import { eq, desc, sql, count, inArray } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import SongCard, { SongWithRelation } from "./_components/SongCard";
@@ -15,8 +15,7 @@ export default async function Home() {
   if (!session) {
     redirect("/auth/sign-in");
   }
-
-  const userId = session?.user.id;
+  const userId = session.user.id;
 
   // First, get the songs with user info and likes count
   // Expected output structure:
@@ -57,6 +56,10 @@ export default async function Home() {
         SELECT COUNT(*)::int 
         FROM ${like} 
         WHERE ${like.songId} = ${song.id}
+      )`,
+      isLiked: sql<boolean>`EXISTS (
+        SELECT 1 FROM ${like}
+        WHERE ${like.songId} = ${song.id} AND ${like.userId} = ${userId}
       )`,
     })
     .from(song)
@@ -167,20 +170,27 @@ export default async function Home() {
   //   },
   //   ...
   // ]
-  const songWithUrls = await Promise.all(
+  type SongWithExtras = SongWithRelation & { isLiked?: boolean };
+  const songWithUrls: SongWithExtras[] = await Promise.all(
     songsWithCategories.map(async (data) => {
       const thumbnailUrl = data.song.thumbnailS3Key
         ? await getPresignedUrl(data.song.thumbnailS3Key)
         : null;
 
-      return { ...data, thumbnailUrl };
+      return { ...data, thumbnailUrl } as SongWithExtras;
     })
   );
+
+  // Mark whether current user liked each song
+  const songWithLikeFlags: SongWithExtras[] = songWithUrls.map((data) => ({
+    ...data,
+    isLikedInitial: !!data.isLiked,
+  }));
 
   const twoDaysAgo = new Date();
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-  const trendingSongs = songWithUrls
+  const trendingSongs = songWithLikeFlags
     .filter((song) => song.song.createdAt >= twoDaysAgo)
     .slice(0, 10);
 
@@ -220,7 +230,7 @@ export default async function Home() {
   //   ]
   //   ... more categories
   // }
-  const categorizedSongs = songWithUrls
+  const categorizedSongs = songWithLikeFlags
     .filter(
       (song) => !trendingSongIds.has(song.song.id) && song.categories.length > 0
     )
@@ -271,6 +281,20 @@ export default async function Home() {
           </div>
         </div>
       )}
+
+      {/* categories */}
+      {Object.entries(categorizedSongs)
+        .slice(0, 5)
+        .map(([category, songs], index) => (
+          <div key={index} className="mt-6">
+            <h2 className="text-xl font-semibold">{category}</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {songs.map((song) => (
+                <SongCard key={song.song.id} song={song as SongWithRelation} />
+              ))}
+            </div>
+          </div>
+        ))}
     </main>
   );
 }

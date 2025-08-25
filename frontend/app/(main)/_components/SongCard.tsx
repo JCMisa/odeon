@@ -35,6 +35,8 @@ export type SongWithRelation = {
     image: string | null;
   };
   likesCount: number;
+  likerUserIds?: string[];
+  isLikedInitial?: boolean;
   categories: Array<{
     id: string;
     name: string;
@@ -50,7 +52,6 @@ const SongCard = ({ song }: SongCardProps) => {
   const setTrack = userPlayerStore((state) => state.setTrack);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedSong, setSelectedSong] = useState<string | null>(null);
 
   const handlePlay = async () => {
     // Don't allow playing if song is still processing
@@ -60,7 +61,6 @@ const SongCard = ({ song }: SongCardProps) => {
     }
 
     setIsLoading(true);
-    setSelectedSong(song.song.id);
 
     try {
       const playUrl = await getPlayUrl(song.song.id);
@@ -86,17 +86,20 @@ const SongCard = ({ song }: SongCardProps) => {
     <div>
       <div
         onClick={handlePlay}
-        className="cursor-pointer rounded-md hover:scale-95 transition-all duration-200 ease-linear"
+        className="cursor-pointer rounded-md hover:opacity-[0.8] transition-opacity duration-200 ease-linear"
       >
         <GeneratedSongCard
           songId={song.song.id}
           songImage={song.thumbnailUrl || "/empty-img.png"}
+          songOwnerId={song.user.id}
           songOwnerEmail={song.user.email}
           songOwnerName={song.user.name}
           songPrompts={song.song.prompt || song.categories}
           songTitle={song.song.title}
           listenCount={song.song.listenCount}
           likeCount={song.likesCount}
+          isPublished={song.song.published}
+          isLikedInitial={!!song.isLikedInitial}
           showPlayButton={false}
         />
       </div>

@@ -6,8 +6,8 @@ import { redirect } from "next/navigation";
 import TrackListFetcher from "./_components/TrackListFetcher";
 import Link from "next/link";
 import { db } from "@/config/db";
-import { song, user } from "@/config/schema";
-import { eq, getTableColumns } from "drizzle-orm";
+import { song, user, like } from "@/config/schema";
+import { eq, getTableColumns, sql } from "drizzle-orm";
 import Empty from "@/components/custom/Empty";
 import ProcessingLoader from "@/components/custom/ProcessingLoader";
 import { getPresignedUrl } from "@/actions/generation";
@@ -35,6 +35,15 @@ const ResulePage = async ({ params }: ResultProps) => {
       ...getTableColumns(song),
       userName: user.name,
       userEmail: user.email,
+      likesCount: sql<number>`(
+        SELECT COUNT(*)::int 
+        FROM ${like} 
+        WHERE ${like.songId} = ${song.id}
+      )`,
+      isLiked: sql<boolean>`EXISTS (
+        SELECT 1 FROM ${like}
+        WHERE ${like.songId} = ${song.id} AND ${like.userId} = ${session.user.id}
+      )`,
     })
     .from(song)
     .leftJoin(user, eq(song.userId, user.id))
@@ -48,6 +57,8 @@ const ResulePage = async ({ params }: ResultProps) => {
       thumbnailUrl = presignedUrl;
     }
   }
+
+  const isLikedInitial = !!(generatedSong as { isLiked?: boolean })?.isLiked;
 
   return (
     <main className="p-10 flex flex-col">
@@ -86,9 +97,15 @@ const ResulePage = async ({ params }: ResultProps) => {
                     songId={generatedSong.id}
                     songTitle={generatedSong.title}
                     songImage={thumbnailUrl}
+                    songOwnerId={generatedSong.userId}
                     songOwnerName={generatedSong.userName || ""}
                     songOwnerEmail={generatedSong.userEmail || ""}
                     songPrompts={generatedSong.prompt || ""}
+                    listenCount={generatedSong.listenCount || 0}
+                    likeCount={generatedSong.likesCount}
+                    isPublished={generatedSong.published || false}
+                    isLikedInitial={isLikedInitial}
+                    showPlayButton={false}
                   />
                 </div>
               )

@@ -10,40 +10,68 @@ import {
   UserIcon,
 } from "lucide-react";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { userPlayerStore } from "@/stores/use-player-store";
 import { Button } from "@/components/ui/button";
 import { getPlayUrl } from "@/actions/generation";
-import { toggleLikeSong } from "@/actions/song";
+import { setPublishedStatus, toggleLikeSong } from "@/actions/song";
+import { toast } from "sonner";
+import { getCurrentUser } from "@/actions/user";
 
 const GeneratedSongCard = ({
   songId,
   songTitle,
   songImage,
+  songOwnerId,
   songOwnerName,
   songOwnerEmail,
   songPrompts,
   listenCount = 0,
   likeCount = 0,
+  isPublished,
+  isLikedInitial,
   showPlayButton = true,
 }: {
   songId: string;
   songTitle: string;
   songImage: string;
+  songOwnerId: string;
   songOwnerName: string;
   songOwnerEmail: string;
   songPrompts: string | Array<{ id: string; name: string }>;
   listenCount: number;
   likeCount: number;
+  isPublished?: boolean;
+  isLikedInitial?: boolean;
   showPlayButton?: boolean;
 }) => {
   const setTrack = userPlayerStore((state) => state.setTrack);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLiked, setIsLiked] = useState(likeCount > 0 ? true : false);
+  const [isLiked, setIsLiked] = useState(!!isLikedInitial);
   const [likesCount, setLikesCount] = useState(likeCount);
   const [isLiking, setIsLiking] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const currentUser = await getCurrentUser();
+      if (currentUser.success && currentUser.data) {
+        if (songOwnerId === currentUser.data.id) {
+          setIsOwner(true);
+        }
+      }
+    };
+
+    getUser();
+  }, [songOwnerId]);
+
+  // Keep local liked state in sync with SSR/prop on refresh or prop changes
+  useEffect(() => {
+    setIsLiked(!!isLikedInitial);
+  }, [isLikedInitial]);
 
   // Handle both string and array types for songPrompts
   const promptsArray = Array.isArray(songPrompts)
@@ -109,7 +137,7 @@ const GeneratedSongCard = ({
   };
 
   return (
-    <div className="w-[30rem] bg-neutral-100 dark:bg-neutral-900 rounded-md flex flex-col items-center justify-center gap-2 p-5">
+    <div className="w-[30rem] max-h-[20rem] overflow-hidden bg-neutral-100 dark:bg-neutral-900 rounded-md flex flex-col items-center justify-center gap-2 p-5">
       <div className="flex items-center justify-between gap-2 w-full px-2">
         {/* owner info */}
         <div className="flex items-center gap-2">
@@ -121,9 +149,34 @@ const GeneratedSongCard = ({
           </p>
         </div>
 
-        <div className="rounded-full bg-primary py-1 px-5 flex items-center justify-center">
-          <span className="text-xs font-semibold tracking-widest">Odeon</span>
-        </div>
+        {isOwner && (
+          <Button
+            onClick={async (e) => {
+              e.stopPropagation();
+              setPublishing(true);
+              try {
+                await setPublishedStatus(songId, !isPublished);
+              } catch (error) {
+                console.log("publishing error: ", error);
+                toast.error("Failed to publish song");
+              } finally {
+                setPublishing(false);
+              }
+            }}
+            disabled={publishing}
+            variant={"outline"}
+            size={"sm"}
+            className={`cursor-pointer border ${isPublished ? "border-green-500" : "border-red-500"}`}
+          >
+            {publishing ? (
+              <LoaderCircleIcon className="animate-spin size-4" />
+            ) : isPublished ? (
+              "Published"
+            ) : (
+              "Unpublished"
+            )}
+          </Button>
+        )}
       </div>
 
       <div className="music-gs">
@@ -189,17 +242,42 @@ const GeneratedSongCard = ({
         </button>
       </div>
 
-      <div className="w-full flex flex-wrap gap-1 px-2">
-        {promptsArray.map((prompt, index) => (
-          <Badge
-            key={index}
-            variant="secondary"
-            className="text-xs px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-          >
-            {prompt}
-          </Badge>
-        ))}
+      <div className="w-full overflow-hidden px-2">
+        <div className="flex gap-1 animate-marquee">
+          {promptsArray.map((prompt, index) => (
+            <Badge
+              key={`a-${index}`}
+              variant="secondary"
+              className="text-xs px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 shrink-0"
+            >
+              {prompt}
+            </Badge>
+          ))}
+          {promptsArray.map((prompt, index) => (
+            <Badge
+              key={`b-${index}`}
+              variant="secondary"
+              className="text-xs px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 shrink-0"
+            >
+              {prompt}
+            </Badge>
+          ))}
+        </div>
       </div>
+      <style jsx>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          width: max-content;
+          animation: marquee 20s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
